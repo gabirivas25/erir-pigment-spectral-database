@@ -136,3 +136,15 @@ scan is added, re-running the backfill will link these automatically.*
 - If real heritage objects are analyzed later, `Collection` and `Object` are ready to use without
   any schema changes, and `Object.SiteLocationID` / `Sample.MeasurementPointDescription` are ready
   to record a real object's permanent site and a specific non-invasive measurement point on it
+
+  ### `analyze_carbonate_mineral_spectra.py`
+**Purpose:** Automated spectral feature extraction and optical distortion classification utility for ER-IR carbonate mineral standards.
+
+* **Database Querying:** Connects directly to the SQLite thesis database to extract `(Wavenumber, Intensity)` arrays for ER-IR acquisitions linked to carbonate minerals (e.g., Calcite, Aragonite, Dolomite).
+* **Two-Tier Distortion Classification:**
+  * **Tier 1 (Zero-Crossing Inversion):** Detects severe, absolute baseline-crossing *Reststrahlen* inversions (\(I_{\text{min}} < 0\)).
+  * **Tier 2 (Relative Derivative Check):** Employs `scipy.signal.find_peaks` with dynamic, scan-range-scaled prominence thresholds (\(\Delta I \times 0.15\)) to identify local derivative curvature masked by elevated baseline offsets.
+* **Feature & Boundary Safety:** Calculates peak/trough coordinates, computes overall dataset Variability Ratios (\(\max(I_{\text{max}}) / \min(I_{\text{max}})\)), stratifies results by physical specimen ID, and triggers warnings for boundary-clipping artifacts.
+* **Usage:**
+  ```bash
+  python3 analyze_carbonate_mineral_spectra.py
