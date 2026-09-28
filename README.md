@@ -149,9 +149,19 @@ scan is added, re-running the backfill will link these automatically.*
   ```bash
   python3 analyze_carbonate_mineral_spectra.py
 
-  Data preparation
+## Requirements
+Python 3 with the following packages:
+
+    python3 -m pip install numpy scipy scikit-learn matplotlib
+
+- numpy and scipy: used by all scripts
+- scikit-learn and matplotlib: used by carbonate_statistics.py (PCA, clustering, figures)
+
+Data preparation
 
 Run harmonize_er_ir_database.py before any analysis. Some ER-IR files were exported as reflectance (R) rather than log10(1/R), and some are duplicate exports. The script copies the original database, removes duplicates, converts R files to log10(1/R), flags files with implausible values for review, and writes a report of every change. The original database is never modified.
 
-python3 harmonize_er_ir_database.py er_ir_pigment_spectral_standards_sqlite.db er_ir_harmonized.db
+python3 harmonize_er_ir_database.py er_ir_pigment_spectral_standards_sqlite.db 
+er_ir_harmonized.db
 python3 analyze_carbonate_mineral_spectra.py er_ir_harmonized.db Calcite
+python3 carbonate_statistics.py er_ir_harmonized.db Calcite 1300 1800
