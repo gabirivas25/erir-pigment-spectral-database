@@ -1,0 +1,221 @@
+mineral,file,status,detail
+Aragonite,Aragonite_1_0.dpt,native log10(1/R),
+Aragonite,Aragonite_1_1.dpt,excluded: duplicate,duplicate of Aragonite_1_0.dpt
+Aragonite,Aragonite_1_2.dpt,native log10(1/R),
+Aragonite,Aragonite_1_3.dpt,native log10(1/R),
+Aragonite,Aragonite_1_4.dpt,converted from R,converted median 1.77 vs native 1.51
+Aragonite,Aragonite_1_5.dpt,excluded: duplicate | converted,duplicate of Aragonite_1_4.dpt; converted median 1.77 vs native 1.51
+Aragonite,Aragonite_1_6.dpt,native log10(1/R),
+Aragonite,Aragonite_1_7.dpt,converted from R,converted median 1.38 vs native 1.51
+Aragonite,Aragonite_1_9.dpt,native log10(1/R),
+Aragonite,Aragonite_2_0.dpt,native log10(1/R),
+Aragonite,Aragonite_2_1.dpt,native log10(1/R),
+Aragonite,Aragonite_2_2.dpt,native log10(1/R),
+Aragonite,Aragonite_2_3.dpt,native log10(1/R),
+Aragonite,Aragonite_2_4.dpt,native log10(1/R),
+Aragonite,Aragonite_2_5.dpt,native log10(1/R),
+Aragonite,Aragonite_2_6.dpt,native log10(1/R),
+Aragonite,Aragonite_2_7.dpt,native log10(1/R),
+Aragonite,Aragonite_2_8.dpt,native log10(1/R),
+Aragonite,Aragonite_2_9.dpt,native log10(1/R),
+Azurite,Azurite_1_0.dpt,native log10(1/R),
+Azurite,Azurite_1_1.dpt,native log10(1/R),
+Azurite,Azurite_1_2.dpt,native log10(1/R),
+Azurite,Azurite_1_3.dpt,native log10(1/R),
+Azurite,Azurite_1_4.dpt,converted from R,converted median 1.75 vs native 2.16
+Azurite,Azurite_1_5.dpt,native log10(1/R),
+Azurite,Azurite_1_6.dpt,native log10(1/R),
+Azurite,Azurite_1_7.dpt,converted from R,converted median 1.92 vs native 2.16
+Azurite,Azurite_1_8.dpt,native log10(1/R),
+Azurite,Azurite_1_9.dpt,native log10(1/R),
+Azurite,Azurite_2_0.dpt,native log10(1/R),
+Azurite,Azurite_2_1.dpt,native log10(1/R),
+Azurite,Azurite_2_3.dpt,native log10(1/R),
+Azurite,Azurite_2_4.dpt,converted from R,converted median 1.91 vs native 2.16
+Azurite,Azurite_2_5.dpt,native log10(1/R),
+Azurite,Azurite_2_6.dpt,native log10(1/R),
+Azurite,Azurite_2_7.dpt,native log10(1/R),
+Azurite,Azurite_2_8.dpt,native log10(1/R),
+Azurite,Azurite_2_9.dpt,native log10(1/R),
+Calcite,Calcite_1_0.dpt,native log10(1/R),
+Calcite,Calcite_1_1.dpt,native log10(1/R),
+Calcite,Calcite_1_2.dpt,converted from R,converted median 1.16 vs native 1.28
+Calcite,Calcite_1_3.dpt,native log10(1/R),
+Calcite,Calcite_1_4.dpt,converted from R,converted median 1.17 vs native 1.28
+Calcite,Calcite_1_5.dpt,native log10(1/R),
+Calcite,Calcite_1_6.dpt,native log10(1/R),
+Calcite,Calcite_1_7.dpt,converted from R,converted median 1.22 vs native 1.28
+Calcite,Calcite_1_8.dpt,native log10(1/R),
+Calcite,Calcite_1_9.dpt,native log10(1/R),
+Calcite,Calcite_1_10.dpt,excluded: duplicate | converted,duplicate of Calcite_1_4.dpt; converted median 1.17 vs native 1.28
+Calcite,Calcite_2_0.dpt,native log10(1/R),
+Calcite,Calcite_2_1.dpt,converted from R,converted median 1.41 vs native 1.28
+Calcite,Calcite_2_2.dpt,native log10(1/R),
+Calcite,Calcite_2_3.dpt,excluded: duplicate,duplicate of Calcite_2_2.dpt
+Calcite,Calcite_2_4.dpt,native log10(1/R),
+Calcite,Calcite_2_5.dpt,converted from R,converted median 1.36 vs native 1.28
+Calcite,Calcite_2_6.dpt,native log10(1/R),
+Calcite,Calcite_2_7.dpt,native log10(1/R),
+Calcite,Calcite_2_8.dpt,native log10(1/R),
+Calcite,Calcite_2_9.dpt,native log10(1/R),
+Cerussite,Cerussite_1_0.dpt,native log10(1/R),
+Cerussite,Cerussite_1_1.dpt,native log10(1/R),
+Cerussite,Cerussite_1_2.dpt,native log10(1/R),
+Cerussite,Cerussite_1_3.dpt,native log10(1/R),
+Cerussite,Cerussite_1_4.dpt,native log10(1/R),
+Cerussite,Cerussite_1_5.dpt,native log10(1/R),
+Cerussite,Cerussite_1_6.dpt,native log10(1/R),
+Cerussite,Cerussite_1_7.dpt,native log10(1/R),
+Cerussite,Cerussite_1_8.dpt,native log10(1/R),
+Cerussite,Cerussite_1_9.dpt,native log10(1/R),
+Cerussite,Cerussite_2_0.dpt,native log10(1/R),
+Cerussite,Cerussite_2_1.dpt,native log10(1/R),
+Cerussite,Cerussite_2_2.dpt,native log10(1/R),
+Cerussite,Cerussite_2_3.dpt,native log10(1/R),
+Cerussite,Cerussite_2_4.dpt,native log10(1/R),
+Cerussite,Cerussite_2_5.dpt,native log10(1/R),
+Cerussite,Cerussite_2_6.dpt,native log10(1/R),
+Cerussite,Cerussite_2_7.dpt,native log10(1/R),
+Cerussite,Cerussite_2_8.dpt,native log10(1/R),
+Cerussite,Cerussite_2_9.dpt,native log10(1/R),
+Cinnabar,Cinnabar_1_1.dpt,native log10(1/R),
+Cinnabar,Cinnabar_1_2.dpt,native log10(1/R),
+Cinnabar,Cinnabar_1_3.dpt,native log10(1/R),
+Cinnabar,Cinnabar_1_4.dpt,native log10(1/R),
+Cinnabar,Cinnabar_1_5.dpt,excluded: duplicate,duplicate of Cinnabar_1_4.dpt
+Cinnabar,Cinnabar_1_6.dpt,native log10(1/R),
+Cinnabar,Cinnabar_2_1.dpt,native log10(1/R),
+Cinnabar,Cinnabar_2_2.dpt,excluded: duplicate,duplicate of Cinnabar_2_1.dpt
+Cinnabar,Cinnabar_2_3.dpt,native log10(1/R),
+Cinnabar,Cinnabar_2_4.dpt,excluded: duplicate,duplicate of Cinnabar_2_3.dpt
+Cinnabar,Cinnabar_2_5.dpt,native log10(1/R),
+Cinnabar,Cinnabar_2_6.dpt,native log10(1/R),
+Cinnabar,Cinnabar_2_7.dpt,native log10(1/R),
+Cinnabar,Cinnabar_2_8.dpt,converted from R,converted median 1.48 vs native 1.44
+Dolemite,Dolemite_1_1.dpt,native log10(1/R),
+Dolemite,Dolemite_1_2.dpt,native log10(1/R),
+Dolemite,Dolemite_1_3.dpt,native log10(1/R),
+Dolemite,Dolemite_1_4.dpt,native log10(1/R),
+Dolemite,Dolemite_1_5.dpt,native log10(1/R),
+Dolemite,Dolemite_1_6.dpt,native log10(1/R),
+Dolemite,Dolemite_1_7.dpt,native log10(1/R),
+Dolemite,Dolemite_1_8.dpt,native log10(1/R),
+Dolemite,Dolemite_1_9.dpt,native log10(1/R),
+Dolemite,Dolemite_2_7.dpt,excluded: duplicate,duplicate of Dolemite_1_9.dpt
+Goethite,Goethite_1_1.dpt,needs review,"values -0.0779 to 0.0579, median -0.00743"
+Goethite,Goethite_1_2.dpt,needs review,"values -0.341 to 0.106, median -0.103"
+Goethite,Goethite_1_3.dpt,needs review,"values -0.774 to -0.305, median -0.521"
+Goethite,Goethite_1_4.dpt,needs review,"values -0.241 to 0.241, median 0.00809"
+Goethite,Goethite_1_5.dpt,needs review,"values -0.114 to 0.296, median 0.122"
+Goethite,Goethite_1_6.dpt,needs review,"values -0.32 to 0.0579, median -0.0934"
+Goethite,Goethite_1_7.dpt,needs review,"values -0.198 to 0.143, median -0.015"
+Goethite,Goethite_1_8.dpt,needs review,"values -0.51 to -0.226, median -0.436"
+Goethite,Goethite_1_9.dpt,needs review,"values -0.566 to -0.167, median -0.334"
+Goethite,Goethite_2_0.dpt,needs review,"values -0.231 to 0.526, median 0.144"
+Goethite,Goethite_2_1.dpt,needs review,"values 0.00985 to 0.979, median 0.357"
+Goethite,Goethite_2_2.dpt,needs review,"values 0.145 to 0.67, median 0.456"
+Goethite,Goethite_2_3.dpt,needs review,"values -0.231 to 0.526, median 0.139"
+Goethite,Goethite_2_4.dpt,needs review,"values -0.602 to 0.868, median -0.394"
+Goethite,Goethite_2_6.dpt,needs review,"values 0.501 to 12.6, median 1.7"
+Goethite,Goethite_2_7.dpt,needs review,"values -1.1 to 0.3, median -0.232"
+Goethite,Goethite_2_8.dpt,needs review,"values 0.201 to 1.72, median 0.584"
+Goethite,Goethite_2_9.dpt,needs review,"values 0.0348 to 0.913, median 0.721"
+Hematite,Hematite_1_0.dpt,native log10(1/R),
+Hematite,Hematite_1_1.dpt,excluded: duplicate,duplicate of Hematite_1_0.dpt
+Hematite,Hematite_1_2.dpt,native log10(1/R),
+Hematite,Hematite_1_3.dpt,native log10(1/R),
+Hematite,Hematite_1_4.dpt,native log10(1/R),
+Hematite,Hematite_1_5.dpt,excluded: duplicate,duplicate of Hematite_1_4.dpt
+Hematite,Hematite_1_6.dpt,native log10(1/R),
+Hematite,Hematite_2_0.dpt,converted from R,converted median 2.26 vs native 2.02
+Hematite,Hematite_2_1.dpt,needs review,"values -8.43e+03 to 5.63e+03, median 60.5"
+Hematite,Hematite_2_2.dpt,converted from R,converted median 2.08 vs native 2.02
+Hematite,Hematite_2_3.dpt,native log10(1/R),
+Hematite,Hematite_2_4.dpt,excluded: duplicate,duplicate of Hematite_2_3.dpt
+Hematite,Hematite_2_5.dpt,native log10(1/R),
+Hematite,Hematite_2_6.dpt,excluded: duplicate,duplicate of Hematite_2_5.dpt
+Hematite,Hematite_2_7.dpt,native log10(1/R),
+Hematite,Hematite_2_8.dpt,excluded: duplicate,duplicate of Hematite_2_7.dpt
+Hematite,Hematite_2_9.dpt,native log10(1/R),
+Hematite,Hematite_2_10.dpt,excluded: duplicate,duplicate of Hematite_2_9.dpt
+Hematite,Hematite_2_11.dpt,native log10(1/R),
+Hematite,Hematite_2_12.dpt,native log10(1/R),
+Hematite,Hematite_2_13.dpt,native log10(1/R),
+Hematite,Hematite_2_14.dpt,native log10(1/R),
+Hematite,Hematite_2_15.dpt,excluded: duplicate,duplicate of Hematite_2_14.dpt
+Hematite,Hematite_2_16.dpt,excluded: duplicate,duplicate of Hematite_2_14.dpt
+Lazurite,Lazurite_1_0.dpt,converted from R,converted median 2.12 vs native 2.68; 1 points at or below zero set to floor
+Lazurite,Lazurite_1_1.dpt,converted from R,converted median 2.21 vs native 2.68
+Lazurite,Lazurite_1_2.dpt,converted from R,converted median 3.27 vs native 2.68; 37 points at or below zero set to floor
+Lazurite,Lazurite_1_3.dpt,converted from R,converted median 2.20 vs native 2.68; 2 points at or below zero set to floor
+Lazurite,Lazurite_1_4.dpt,native log10(1/R),
+Lazurite,Lazurite_1_5.dpt,native log10(1/R),
+Lazurite,Lazurite_1_6.dpt,converted from R,converted median 2.67 vs native 2.68; 7 points at or below zero set to floor
+Lazurite,Lazurite_1_7..dpt,converted from R,converted median 2.16 vs native 2.68
+Lazurite,Lazurite_1_8.dpt,excluded: duplicate | converted,duplicate of Lazurite_1_7..dpt; converted median 2.16 vs native 2.68
+Lazurite,Lazurite_1_9.dpt,native log10(1/R),
+Lazurite,Lazurite_1_10.dpt,excluded: duplicate | converted,duplicate of Lazurite_1_7..dpt; converted median 2.16 vs native 2.68
+Lazurite,Lazurite_1_11.dpt,excluded: duplicate,duplicate of Lazurite_1_9.dpt
+Lazurite,Lazurite_1_12.dpt,native log10(1/R),
+Lazurite,Lazurite_1_13.dpt,excluded: duplicate,duplicate of Lazurite_1_12.dpt
+Lazurite,Lazurite_2_0.dpt,converted from R,converted median 2.19 vs native 2.68
+Lazurite,Lazurite_2_1.dpt,excluded: duplicate | converted,duplicate of Lazurite_2_0.dpt; converted median 2.19 vs native 2.68
+Lazurite,Lazurite_2_2.dpt,converted from R,converted median 2.14 vs native 2.68
+Lazurite,Lazurite_2_3.dpt,excluded: duplicate | converted,duplicate of Lazurite_2_2.dpt; converted median 2.14 vs native 2.68
+Lazurite,Lazurite_2_4.dpt,converted from R,converted median 2.54 vs native 2.68; 2 points at or below zero set to floor
+Lazurite,Lazurite_2_5.dpt,excluded: duplicate | converted,duplicate of Lazurite_2_4.dpt; converted median 2.54 vs native 2.68; 2 points at or below zero set to floor
+Lazurite,Lazurite_2_6.dpt,converted from R,converted median 2.21 vs native 2.68
+Lazurite,Lazurite_2_7.dpt,excluded: duplicate | converted,duplicate of Lazurite_2_6.dpt; converted median 2.21 vs native 2.68
+Lazurite,Lazurite_2_8.dpt,converted from R,converted median 2.61 vs native 2.68
+Lazurite,Lazurite_2_9.dpt,excluded: duplicate | converted,duplicate of Lazurite_2_8.dpt; converted median 2.61 vs native 2.68
+Lazurite,Lazurite_2_10.dpt,excluded: duplicate | converted,duplicate of Lazurite_2_8.dpt; converted median 2.61 vs native 2.68
+Magnetite,Magnetite_1_0.dpt,native log10(1/R),
+Magnetite,Magnetite_1_1.dpt,native log10(1/R),
+Magnetite,Magnetite_1_2.dpt,native log10(1/R),
+Magnetite,Magnetite_1_3.dpt,native log10(1/R),
+Magnetite,Magnetite_1_4.dpt,native log10(1/R),
+Magnetite,Magnetite_1_5.dpt,native log10(1/R),
+Magnetite,Magnetite_1_6.dpt,native log10(1/R),
+Magnetite,Magnetite_1_7.dpt,native log10(1/R),
+Magnetite,Magnetite_1_8.dpt,native log10(1/R),
+Magnetite,Magnetite_1_9.dpt,native log10(1/R),
+Magnetite,Magnetite_2_0.dpt,native log10(1/R),
+Magnetite,Magnetite_2_1.dpt,converted from R,converted median 1.49 vs native 1.55
+Magnetite,Magnetite_2_2.dpt,native log10(1/R),
+Magnetite,Magnetite_2_3.dpt,native log10(1/R),
+Magnetite,Magnetite_2_4.dpt,native log10(1/R),
+Magnetite,Magnetite_2_5.dpt,native log10(1/R),
+Magnetite,Magnetite_2_6.dpt,native log10(1/R),
+Magnetite,Magnetite_2_7.dpt,native log10(1/R),
+Magnetite,Magnetite_2_8.dpt,native log10(1/R),
+Magnetite,Magnetite_2_9.dpt,native log10(1/R),
+Malachite,Malachite_2_0.dpt,native log10(1/R),
+Malachite,Malachite_2_1.dpt,native log10(1/R),
+Malachite,Malachite_2_2.dpt,native log10(1/R),
+Malachite,Malachite_2_3.dpt,native log10(1/R),
+Malachite,Malachite_2_4.dpt,native log10(1/R),
+Malachite,Malachite_2_5.dpt,native log10(1/R),
+Malachite,Malachite_2_6.dpt,native log10(1/R),
+Malachite,Malachite_2_7.dpt,native log10(1/R),
+Malachite,Malachite_2_8.dpt,native log10(1/R),
+Malachite,Malachite_2_9.dpt,native log10(1/R),
+Orpiment,Orpiment_1_0.dpt,native log10(1/R),
+Orpiment,Orpiment_1_1.dpt,converted from R,converted median 1.83 vs native 1.11
+Orpiment,Orpiment_1_2.dpt,native log10(1/R),
+Orpiment,Orpiment_1_3.dpt,native log10(1/R),
+Orpiment,Orpiment_1_4.dpt,native log10(1/R),
+Orpiment,Orpiment_1_5.dpt,native log10(1/R),
+Orpiment,Orpiment_1_6.dpt,native log10(1/R),
+Orpiment,Orpiment_1_7.dpt,native log10(1/R),
+Orpiment,Orpiment_1_8.dpt,native log10(1/R),
+Orpiment,Orpiment_1_9.dpt,native log10(1/R),
+Orpiment,Orpiment_2_0.dpt,native log10(1/R),
+Orpiment,Orpiment_2_1.dpt,native log10(1/R),
+Orpiment,Orpiment_2_2.dpt,native log10(1/R),
+Orpiment,Orpiment_2_3.dpt,native log10(1/R),
+Orpiment,Orpiment_2_4.dpt,native log10(1/R),
+Orpiment,Orpiment_2_5.dpt,native log10(1/R),
+Orpiment,Orpiment_2_6.dpt,native log10(1/R),
+Orpiment,Orpiment_2_7.dpt,native log10(1/R),
+Orpiment,Orpiment_2_8.dpt,native log10(1/R),
+Orpiment,Orpiment_2_9.dpt,native log10(1/R),

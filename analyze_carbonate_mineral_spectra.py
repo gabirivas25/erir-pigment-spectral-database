@@ -42,6 +42,18 @@ window was widened to 1300-1800 cm-1 specifically to remove this
 boundary-clipping artifact. Always check for this: if any result's peak
 or minimum sits exactly at your window's edge, the window is too narrow.
 
+DATA PREPARATION (REQUIRED):
+Run harmonize_er_ir_database.py first and point this script at the
+harmonized copy. That step removes duplicate exports and converts files
+exported as reflectance (R) to log10(1/R), so every scan is in the same
+units. This script skips any spectrum tagged "Excluded: ..." or
+"Needs review: ..." and marks converted scans with * in the output.
+
+WHAT TIER 1 MEANS PHYSICALLY:
+In log10(1/R), a value below zero means R > 1: at that wavenumber the
+sample reflected more than the reference. On the reststrahlen band this
+happens when strong specular reflection exceeds the reference signal.
+
 USAGE:
     python3 analyze_carbonate_mineral_spectra.py   [window_low] [window_high]
 
@@ -160,38 +172,72 @@ def main(db_path, material_name, window_low=WINDOW_LOW, window_high=WINDOW_HIGH)
         JOIN Sample s ON s.SampleID = m.SampleID
         JOIN Material mat ON mat.MaterialID = s.MaterialID
         WHERE mat.MaterialName = ? AND amt.ModeName = 'ER-IR'
+          AND sp.SpectrumID NOT IN (
+              SELECT te.EntityID FROM TaggedEntity te JOIN Tag t ON t.TagID = te.TagID
+              WHERE te.EntityType = 'Spectrum'
+                AND (t.TagLabel LIKE 'Excluded:%' OR t.TagLabel LIKE 'Needs review:%'))
         ORDER BY sp.SourceFilename
         """,
         (material_name,),
     )
     scans = cur.fetchall()
 
+    # Which scans were converted from reflectance, and how many were skipped
+    converted = {r[0] for r in cur.execute(
+        """SELECT te.EntityID FROM TaggedEntity te JOIN Tag t ON t.TagID = te.TagID
+           WHERE te.EntityType = 'Spectrum' AND t.TagLabel = 'Converted: R to log10(1/R)'""")}
+    skipped = cur.execute(
+        """SELECT sp.SourceFilename, t.TagLabel
+           FROM Spectrum sp
+           JOIN AcquisitionModeType amt ON amt.AcquisitionModeID = sp.AcquisitionModeID
+           JOIN Measurement m ON m.MeasurementID = sp.MeasurementID
+           JOIN Sample s ON s.SampleID = m.SampleID
+           JOIN Material mat ON mat.MaterialID = s.MaterialID
+           JOIN TaggedEntity te ON te.EntityID = sp.SpectrumID AND te.EntityType = 'Spectrum'
+           JOIN Tag t ON t.TagID = te.TagID
+           WHERE mat.MaterialName = ? AND amt.ModeName = 'ER-IR'
+             AND (t.TagLabel LIKE 'Excluded:%' OR t.TagLabel LIKE 'Needs review:%')
+           ORDER BY sp.SourceFilename""", (material_name,)).fetchall()
+    if skipped:
+        print(f"Skipped {len(skipped)} file(s):")
+        for fn, label in skipped:
+            print(f"  {fn}: {label}")
+        print()
+
     if not scans:
         print(f"No ER-IR scans found for material '{material_name}'.")
         return
 
-    print(f"{'Scan':<20}{'PeakWN':<10}{'PeakVal':<10}{'MinWN':<10}{'MinVal':<10}{'Severe':<8}{'DerivShape'}")
+    print(f"{'Scan':<22}{'PeakWN':<10}{'PeakVal':<10}{'MinWN':<10}{'MinVal':<10}{'Severe':<8}{'DerivShape'}")
     results = []
     for spectrum_id, filename in scans:
         wn, intensity = get_spectrum(cur, spectrum_id)
         peak_wn, peak_val, min_wn, min_val, is_severe, is_deriv = analyze_one_scan(
             wn, intensity, lo=window_low, hi=window_high)
         specimen = specimen_number(filename)
+        if spectrum_id in converted:
+            filename = filename + "*"
         results.append(dict(
             filename=filename, specimen=specimen,
             peak_wn=peak_wn, peak_val=peak_val,
             min_wn=min_wn, min_val=min_val,
             is_severe=is_severe, is_deriv=is_deriv,
         ))
-        print(f"{filename:<20}{peak_wn:<10.1f}{peak_val:<10.3f}{min_wn:<10.1f}{min_val:<10.3f}{str(is_severe):<8}{is_deriv}")
+        print(f"{filename:<22}{peak_wn:<10.1f}{peak_val:<10.3f}{min_wn:<10.1f}{min_val:<10.3f}{str(is_severe):<8}{is_deriv}")
 
     # --- Warn if any result sits exactly on the window edge (clipping check) ---
-    edge_hits = [r for r in results if r["peak_wn"] in (window_low, window_high)
-                 or r["min_wn"] in (window_low, window_high)]
+    # Data points rarely fall exactly on the window bounds, so test for
+    # "within EDGE_TOL cm-1 of an edge" rather than exact equality.
+    EDGE_TOL = 5.0
+    def near_edge(x):
+        return abs(x - window_low) <= EDGE_TOL or abs(x - window_high) <= EDGE_TOL
+    edge_hits = [r for r in results if near_edge(r["peak_wn"]) or near_edge(r["min_wn"])]
     if edge_hits:
-        print(f"\nWARNING: {len(edge_hits)} scan(s) have a peak or minimum exactly at the "
+        print(f"\nWARNING: {len(edge_hits)} scan(s) have a peak or minimum within {EDGE_TOL:.0f} cm-1 of the "
               f"window edge ({window_low} or {window_high} cm-1). The window may be clipping "
               f"the true feature -- consider widening the window and re-running.")
+        for r in edge_hits:
+            print(f"  {r['filename']}: peak {r['peak_wn']:.1f}, min {r['min_wn']:.1f}")
 
     # --- Summary statistics ---
     peak_vals = [r["peak_val"] for r in results]
@@ -211,6 +257,9 @@ def main(db_path, material_name, window_low=WINDOW_LOW, window_high=WINDOW_HIGH)
         spec_mean_peak_wn = np.mean([r["peak_wn"] for r in spec_results])
         print(f"  Specimen {spec} (n={len(spec_results)}): {spec_severe} severe / {spec_deriv} derivative-shaped, "
               f"mean peak position {spec_mean_peak_wn:.1f} cm-1")
+
+    if converted & {sid for sid, _ in scans}:
+        print("\n* converted from reflectance (R) to log10(1/R) during harmonization")
 
     conn.close()
 
