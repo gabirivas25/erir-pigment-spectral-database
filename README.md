@@ -1,167 +1,137 @@
-# erir-pigment-spectral-database
-Relational SQLite/MySQL spectral database and automated ingestion pipeline for cultural heritage mineral pigments (FTIR ER-IR and ATR standards).
 # Pigment Spectral Standards Database
 
-Prepared by Maria Gabriela Rivas Carmona — University of Padova
-Thesis advisors: Professor Alfonso Zoleo (Chemistry) & Professor Nicola Orio (Computer Science)
+Relational SQLite/MySQL database of paired ER-IR and ATR infrared spectra of mineral pigment standards, for cultural heritage research.
+
+Prepared by Maria Gabriela Rivas Carmona, University of Padova
+Thesis advisors: Professor Alfonso Zoleo (Chemistry) and Professor Nicola Orio (Computer Science)
 
 ## What this is
 
-A working, populated relational database containing every ER-IR scan and ATR reference standard
-collected so far across all 12 mineral pigments studied in this thesis.
+A reference database of external reflectance infrared (ER-IR) scans, each paired with the attenuated total reflectance (ATR) standard of the same material. The ER-IR scans are the kind of spectrum that can be taken non-invasively on a real object; the ATR standards are the reference they are compared with. Spectra were measured on a Bruker LUMOS II FT-IR microscope.
 
-**Format:** SQLite (`er_ir_pigment_spectral_standards_sqlite.db`) — a real, queryable database in a single
-file, requiring no server setup. A verified MySQL-compatible version
-(`er_ir_pigment_spectral_standards_mysql_schema_final.sql`) is included separately, so the same design can
-be deployed to a real MySQL server later (e.g. a university-hosted server), requiring only a data
-migration step.
+**Status:** schema version 4 (18 tables). The database file is being rebuilt from re-exported absorbance scans, and the counts of scans and materials will be added here when it is loaded. Files from the earlier version of the project are in [`Archived/`](Archived/).
 
-*Note: unlike an earlier draft of this schema, the MySQL version has been tested directly against
-a live 9.3.0 MySQL Community Server - GPL — all 21 tables and every foreign-key relationship were confirmed to build
-and function correctly, not just written by inspection.*
+## Files
 
-## How to open it — for non-technical readers
+| File | What it is |
+|---|---|
+| `pigment_spectral_standards_sqlite_schema.sql` | Creates the database in SQLite |
+| `pigment_spectral_standards_mysql_schema.sql` | The same design for MySQL 8 (schema only) |
+| `ER_Diagram.png` | Entity-relationship diagram of the 18 tables |
+| `Archived/` | The earlier schema, its data and the analysis scripts that used it |
 
-1. Download **[DB Browser for SQLite](https://sqlitebrowser.org/)** — free, no account needed,
-   available for Windows, Mac, and Linux.
-2. Open the app, then **File → Open Database**, and select `er_ir_pigment_spectral_standards_sqlite.db`.
-3. Click the **Browse Data** tab to scroll through any table visually (e.g. `Material`, `Spectrum`).
-4. Click the **Execute SQL** tab to run any of the example queries below and see the results
-   directly in a table. No installation of anything beyond this one free app is required.
+## How to open it, for non-technical readers
 
-## How to open it — for technical readers
+1. Download [DB Browser for SQLite](https://sqlitebrowser.org/). It is free and needs no account.
+2. Open it, choose **File, then Open Database**, and select the `.db` file.
+3. The **Browse Data** tab shows any table. The **Execute SQL** tab runs the example queries below.
 
-**Command line:**
+## How to open it, for technical readers
+
 ```
-sqlite3 er_ir_pigment_spectral_standards_sqlite.db
+sqlite3 your_database.db
 ```
 
-**Python** (using the standard library, no extra installation needed):
+To create an empty database from the schema:
+
+```
+sqlite3 new_database.db < pigment_spectral_standards_sqlite_schema.sql
+```
+
+SQLite enforces foreign keys only when `PRAGMA foreign_keys = ON` is set for the connection. DB Browser for SQLite turns it on by default.
+
 ```python
 import sqlite3
-conn = sqlite3.connect("er_ir_pigment_spectral_standards_sqlite.db")
-cursor = conn.cursor()
-cursor.execute("SELECT * FROM Material")
-print(cursor.fetchall())
+conn = sqlite3.connect("your_database.db")
+print(conn.execute("SELECT * FROM Material").fetchall())
 ```
 
-## Schema overview (21 tables)
+## How spectra are stored
+
+Each measurement holds its whole spectrum in one column, `Measurement.SpectrumData`, as a JSON array of `[wavenumber, intensity]` pairs, for example `[[598.1, 0.52], [600.2, 0.53], ...]`. An ER-IR scan has 1,660 pairs. The pairs stay together, and SQLite refuses text in this column that is not valid JSON.
+
+The database holds absorbance data only. Spectra are converted to absorbance in OPUS before upload, and `IntensityMode` is filled in as `Absorbance`. The original `.dpt` file for each measurement is recorded in `SpectralFile`, with its size and a checksum.
+
+## Schema overview (18 tables)
+
+**Core data**
 
 | Table | Purpose |
 |---|---|
-| `MineralClass` | Lookup: mineral category (Carbonate, Oxide, Silicate, Sulfide) |
-| `LocationType` | Lookup: measurement setting (Laboratory, In Situ – Interior, In Situ – Exterior) |
-| `AcquisitionModeType` | Lookup: spectral acquisition mode (ER-IR, ATR) |
-| `Institution` | University of Padova |
-| `Operator` | The measurement operator |
-| `Collection` / `Object` | For future use, if real heritage objects (not just standards) are added; `Collection` links to `Institution`, `Object` carries its own permanent `SiteLocationID` |
-| `Material` | The 12 minerals, linked to `MineralClass`, with chemical formula |
-| `Sample` | Each physical specimen, or (in future use) a non-invasive measurement point on a real object |
-| `Instrument` / `InstrumentConfiguration` | The Bruker LUMOS II FT-IR microscope and its settings |
-| `EnvironmentConditions` | For future use, if temperature/humidity logging is added |
-| `MeasurementLocation` | Where a specific measurement session physically took place |
-| `Measurement` | One row per scan event (links sample, instrument, operator, date) |
-| `Spectrum` | One row per resulting spectrum, linked to `AcquisitionModeType`, with source filename |
-| `SpectralDataPoint` | Every individual (wavenumber, intensity) pair — the actual spectral data |
-| `OpticalArtifacts` | Structured record of observed optical effects (e.g. the reststrahlen effect) |
-| `Preprocessing` | Record of data-transformation steps applied to a spectrum |
-| `SpectralFile` | Reference to the underlying raw/processed source files |
-| `Tag` / `TaggedEntity` | Flexible labeling system, used to flag known data-quality issues |
+| `Material` | A pigment or mineral: name, chemical formula, whether it is synthetic |
+| `Source` | Who supplied a specimen, for example a collection or a commercial supplier |
+| `Specimen` | The physical item that was measured: a powder, a ground mineral or a fragment |
+| `Measurement` | One scan, with its spectrum, mode (ER-IR or ATR) and, for an ER-IR scan, the link to its ATR standard |
+| `SpectralFile` | The `.dpt` file for each measurement, with type, size and checksum |
+| `Identification` | Links a specimen to a material it matched. Written by the matching software |
 
-## What's populated right now
+**Provenance and instruments**
 
-- **220 ER-IR spectra** and **11 ATR reference standards**, across all 12 minerals
-- **386,474 individual spectral data points**
-- **200 of the 220 ER-IR spectra** are directly linked to their own mineral's ATR standard via
-  `ReferenceSpectrumID` (the remaining 20, all Magnetite, await that mineral's ATR standard)
-- **18 known-empty scan files skipped** (7 from Dolomite, 11 from Malachite) — not fabricated,
-  not silently dropped, genuinely absent from the source data
-- `Collection`, `Object`, `EnvironmentConditions`, `OpticalArtifacts`, `Preprocessing`,
-  `SpectralFile`, and `LocationType`'s linkage are ready for future use but not yet populated
-  with real records beyond `LocationType`'s own three standard category rows
+| Table | Purpose |
+|---|---|
+| `Object`, `Collection`, `Institution` | For real heritage objects: where they came from, where they are now, and who holds them |
+| `Operator` | Who made the measurement |
+| `Instrument`, `InstrumentConfiguration` | The instrument and its settings |
+| `EnvironmentConditions` | Optional temperature, humidity, pressure and illumination |
 
-## Known data-quality issues — already tagged in the database itself
+**Data-quality tags**
 
-```sql
-SELECT t.TagLabel, s.SampleType
-FROM TaggedEntity te
-JOIN Tag t ON t.TagID = te.TagID
-JOIN Sample s ON s.SampleID = te.EntityID AND te.EntityType = 'Sample';
-```
+| Table | Purpose |
+|---|---|
+| `Tag`, `TaggedEntity` | Labels, such as `needs-atr-recollection`, attached to a specimen or a measurement |
 
-- `needs-atr-recollection` — Magnetite (ATR standard lost during sample grinding)
-- `partial-scan-data` — Dolomite and Malachite (some scan files are 0 bytes)
+**Pick lists**
+
+| Table | Values |
+|---|---|
+| `AcquisitionModeType` | ER-IR, ATR |
+| `MeasurementSiteType` | Laboratory, In Situ - Interior, In Situ - Exterior |
+| `SpecimenType` | powder pigment, ground mineral, mineral fragment |
+
+Most fields are optional. The required ones are marked `NOT NULL` in the schema file.
 
 ## Example queries
 
-Get every mineral and how many ER-IR scans exist for it:
+How many ER-IR scans exist for each material:
+
 ```sql
 SELECT mat.MaterialName, COUNT(*) AS n_scans
-FROM Spectrum sp
-JOIN AcquisitionModeType amt ON amt.AcquisitionModeID = sp.AcquisitionModeID
-JOIN Measurement m ON m.MeasurementID = sp.MeasurementID
-JOIN Sample s ON s.SampleID = m.SampleID
+FROM Measurement m
+JOIN AcquisitionModeType amt ON amt.AcquisitionModeID = m.AcquisitionModeID
+JOIN Specimen s ON s.SpecimenID = m.SpecimenID
 JOIN Material mat ON mat.MaterialID = s.MaterialID
 WHERE amt.ModeName = 'ER-IR'
 GROUP BY mat.MaterialName;
 ```
 
-Pull the full spectrum for one specific scan:
+Unpack the full spectrum of one scan into wavenumber and intensity rows:
+
 ```sql
-SELECT dp.Wavenumber, dp.Intensity
-FROM SpectralDataPoint dp
-JOIN Spectrum sp ON sp.SpectrumID = dp.SpectrumID
-WHERE sp.SourceFilename = 'Aragonite_1_0.dpt'
-ORDER BY dp.Wavenumber DESC;
+SELECT json_extract(p.value, '$[0]') AS Wavenumber,
+       json_extract(p.value, '$[1]') AS Intensity
+FROM Measurement m
+JOIN SpectralFile f ON f.MeasurementID = m.MeasurementID,
+     json_each(m.SpectrumData) p
+WHERE f.FilePath LIKE '%Aragonite_1_0.dpt'
+ORDER BY Wavenumber DESC;
 ```
 
-Find a mineral's ER-IR scan alongside its own ATR reference standard, using `ReferenceSpectrumID`:
+List each ER-IR scan next to its ATR standard:
+
 ```sql
-SELECT er.SourceFilename AS ER_IR_scan, atr.SourceFilename AS ATR_standard
-FROM Spectrum er
-JOIN Spectrum atr ON atr.SpectrumID = er.ReferenceSpectrumID;
+SELECT fe.FilePath AS ER_IR_scan, fa.FilePath AS ATR_standard
+FROM Measurement er
+JOIN SpectralFile fe ON fe.MeasurementID = er.MeasurementID
+JOIN SpectralFile fa ON fa.MeasurementID = er.ReferenceMeasurementID;
 ```
-*`ReferenceSpectrumID` has been backfilled for all 200 ER-IR spectra with a corresponding ATR
-standard (11 of 12 minerals). Magnetite's 20 ER-IR spectra have no linked reference yet, since no
-ATR standard has been collected for it (see `needs-atr-recollection` below); once Magnetite's ATR
-scan is added, re-running the backfill will link these automatically.*
 
-## Next steps for this database
+Show the data-quality tags on specimens:
 
-- Populate `Preprocessing` with a record of the SNV normalization or OPUS absorbance conversion
-  applied, so the transformation history is traceable alongside the raw data
-- Add the Magnetite ATR standard once re-scanned, and the missing Dolomite/Malachite scan batches
-  once recollected, then remove the corresponding `Tag` entries
-- Consider populating `EnvironmentConditions` if temperature/humidity were logged during acquisition
-- If real heritage objects are analyzed later, `Collection` and `Object` are ready to use without
-  any schema changes, and `Object.SiteLocationID` / `Sample.MeasurementPointDescription` are ready
-  to record a real object's permanent site and a specific non-invasive measurement point on it
-
-  ### `analyze_carbonate_mineral_spectra.py`
-**Purpose:** Automated spectral feature extraction and optical distortion classification utility for ER-IR carbonate mineral standards.
-
-* **Database Querying:** Connects directly to the SQLite thesis database to extract `(Wavenumber, Intensity)` arrays for ER-IR acquisitions linked to carbonate minerals (e.g., Calcite, Aragonite, Dolomite).
-* **Two-Tier Distortion Classification:**
-  * **Tier 1 (Zero-Crossing Inversion):** Detects severe, absolute baseline-crossing *Reststrahlen* inversions (\(I_{\text{min}} < 0\)).
-  * **Tier 2 (Relative Derivative Check):** Employs `scipy.signal.find_peaks` with dynamic, scan-range-scaled prominence thresholds (\(\Delta I \times 0.15\)) to identify local derivative curvature masked by elevated baseline offsets.
-* **Feature & Boundary Safety:** Calculates peak/trough coordinates, computes overall dataset Variability Ratios (\(\max(I_{\text{max}}) / \min(I_{\text{max}})\)), stratifies results by physical specimen ID, and triggers warnings for boundary-clipping artifacts.
-* **Usage:**
-  ```bash
-  python3 analyze_carbonate_mineral_spectra.py
-
-## Requirements
-Python 3 with the following packages:
-
-    python3 -m pip install numpy scipy scikit-learn matplotlib
-
-- numpy and scipy: used by all scripts
-- scikit-learn and matplotlib: used by carbonate_statistics.py (PCA, clustering, figures)
-
-Data preparation
-
-Run harmonize_er_ir_database.py before any analysis. Some ER-IR files were exported as reflectance (R) rather than log10(1/R), and some are duplicate exports. The script copies the original database, removes duplicates, converts R files to log10(1/R), flags files with implausible values for review, and writes a report of every change. The original database is never modified.
-
-python3 harmonize_er_ir_database.py er_ir_pigment_spectral_standards_sqlite.db 
-er_ir_harmonized.db
-python3 analyze_carbonate_mineral_spectra.py er_ir_harmonized.db Calcite
-python3 carbonate_statistics.py er_ir_harmonized.db Calcite 1300 1800
+```sql
+SELECT t.TagLabel, mat.MaterialName, s.SpecimenID
+FROM TaggedEntity te
+JOIN Tag t ON t.TagID = te.TagID
+JOIN Specimen s ON s.SpecimenID = te.EntityID
+LEFT JOIN Material mat ON mat.MaterialID = s.MaterialID
+WHERE te.EntityType = 'Specimen';
+```
