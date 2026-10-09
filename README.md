@@ -9,13 +9,17 @@ Thesis advisors: Professor Alfonso Zoleo (Chemistry) and Professor Nicola Orio (
 
 A reference database of external reflectance infrared (ER-IR) scans, each paired with the attenuated total reflectance (ATR) standard of the same material. The ER-IR scans are the kind of spectrum that can be taken non-invasively on a real object; the ATR standards are the reference they are compared with. Spectra were measured on a Bruker LUMOS II FT-IR microscope.
 
-**Status:** schema version 4 (18 tables). The database file is being rebuilt from re-exported absorbance scans, and the counts of scans and materials will be added here when it is loaded. Files from the earlier version of the project are in [`Archived/`](Archived/).
+**Status:** schema version 4 (18 tables), loaded from the re-exported absorbance scans. The database holds 256 measurements (242 ER-IR and 14 ATR) of 15 materials on 37 specimens. 220 of the ER-IR scans are linked to the ATR standard of the same material. Magnetite has no ATR standard yet and is tagged `needs-atr-recollection`. Files from the earlier version of the project are in [`Archived/`](Archived/).
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `pigment_spectral_standards_sqlite_schema.sql` | Creates the database in SQLite |
+| `pigment_spectral_standards.db` | The database, SQLite, ready to open |
+| `scans/` | The 256 original `.dpt` scan files the database was built from |
+| `import_scans.py` | Builds the database from `scans/` and writes `import_report.md` |
+| `import_report.md` | What the import loaded, corrected and skipped |
+| `pigment_spectral_standards_sqlite_schema.sql` | Creates an empty database in SQLite |
 | `pigment_spectral_standards_mysql_schema.sql` | The same design for MySQL 8 (schema only) |
 | `ER_Diagram.png` | Entity-relationship diagram of the 18 tables |
 | `Archived/` | The earlier schema, its data and the analysis scripts that used it |
@@ -29,7 +33,13 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 ## How to open it, for technical readers
 
 ```
-sqlite3 your_database.db
+sqlite3 pigment_spectral_standards.db
+```
+
+To rebuild it from the scans:
+
+```
+python3 import_scans.py scans pigment_spectral_standards_sqlite_schema.sql new_database.db
 ```
 
 To create an empty database from the schema:
@@ -48,7 +58,7 @@ print(conn.execute("SELECT * FROM Material").fetchall())
 
 ## How spectra are stored
 
-Each measurement holds its whole spectrum in one column, `Measurement.SpectrumData`, as a JSON array of `[wavenumber, intensity]` pairs, for example `[[598.1, 0.52], [600.2, 0.53], ...]`. An ER-IR scan has 1,660 pairs. The pairs stay together, and SQLite refuses text in this column that is not valid JSON.
+Each measurement holds its whole spectrum in one column, `Measurement.SpectrumData`, as a JSON array of `[wavenumber, intensity]` pairs, for example `[[598.1, 0.52], [600.2, 0.53], ...]`. An ER-IR scan has 1,660 pairs and an ATR scan has 1,934. The pairs stay together, and SQLite refuses text in this column that is not valid JSON.
 
 The database holds absorbance data only. Spectra are converted to absorbance in OPUS before upload, and `IntensityMode` is filled in as `Absorbance`. The original `.dpt` file for each measurement is recorded in `SpectralFile`, with its size and a checksum.
 
@@ -112,7 +122,7 @@ SELECT json_extract(p.value, '$[0]') AS Wavenumber,
 FROM Measurement m
 JOIN SpectralFile f ON f.MeasurementID = m.MeasurementID,
      json_each(m.SpectrumData) p
-WHERE f.FilePath LIKE '%Aragonite_1_0.dpt'
+WHERE f.FilePath LIKE '%Aragonite1.0.dpt'
 ORDER BY Wavenumber DESC;
 ```
 
