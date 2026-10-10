@@ -122,6 +122,28 @@ Rules:
 
 ---
 
+## The `scans` folder
+
+All folder names are lower case. The existing folders are the ones from the first scan session, and each carries its date in `scan_dates.csv`:
+
+```
+scans/
+├── carbonates/                 aragonite, azurite, calcite, cerussite, dolomite, malachite
+│   └── powder_dolomite/        the leftover dolomite scans (specimen 2)
+├── oxides/                     goethite, hematite, magnetite
+├── powder_atr/                 one ATR standard per mineral
+├── silicates/                  lazurite
+├── sulfides/                   cinnabar, orpiment
+└── synthetics/
+    ├── malachite/              synthetic malachite
+    ├── ultramarine/            synthetic ultramarine
+    └── verdigris/              verdigris
+```
+
+New scans go in a **new folder named with the date** (for example `scans/2026-11-05/`), not in these folders.
+
+---
+
 # Part 3: Step-by-step workflows
 
 Before each workflow, do these three things:
@@ -136,7 +158,7 @@ Example: three new calcite scans, measured on 5 November 2026.
 
 1. **Export the scans from OPUS as absorbance `.dpt` files.**
 2. **Name them** with the pattern in Part 2, for example `calcite_ER_IR_1_12.dpt`, `calcite_ER_IR_1_13.dpt`, `calcite_ER_IR_1_14.dpt` (the next scans of calcite specimen 1).
-3. **Make a new folder** inside the `scans` folder, named with the date of the scan: `scans/2026-11-05`. Put the new files inside it. Do **not** put new scans in the older folders (Carbonates, Oxides, Silicates, Sulfides, PowderATR, Synthetics): those folders already carry an older date.
+3. **Make a new folder** inside the `scans` folder, named with the date of the scan: `scans/2026-11-05`. Put the new files inside it. Do **not** put new scans in the older folders (carbonates, oxides, silicates, sulfides, powder_atr, synthetics): those folders already carry an older date.
 4. **Tell the program the date.** Open `scan_dates.csv` (see **How to edit the two sheets** below) and add one line at the bottom:
    ```
    2026-11-05/,2026-11-05
@@ -271,7 +293,7 @@ The program skips any file whose path is already in the database, so a corrected
 2. Click the **Execute SQL** tab.
 3. Delete everything in the box and paste the two lines below, changing only the file path in the first line to the scan you are replacing:
    ```sql
-   DELETE FROM SpectralFile WHERE FilePath = 'Oxides/hematite_ER_IR_2_3.dpt';
+   DELETE FROM SpectralFile WHERE FilePath = 'oxides/hematite_ER_IR_2_3.dpt';
    DELETE FROM Measurement WHERE MeasurementID NOT IN (SELECT MeasurementID FROM SpectralFile);
    ```
 4. Click the **play button** (the triangle) above the box. You should see `Execution finished without errors`.
@@ -304,7 +326,7 @@ Rules for both sheets:
 - No empty lines in the middle.
 - A value that contains a comma must be inside double quotes, for example `"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2"`.
 - Dates are always year-month-day with dashes: `2026-11-05`.
-- In `scan_dates.csv`, the first column is a folder name **ending with a slash**. The longest matching folder wins, so a line for `Carbonates/powder_dolomite/` overrides the line for `Carbonates/`.
+- In `scan_dates.csv`, the first column is a folder name **ending with a slash**. The longest matching folder wins, so a line for `carbonates/powder_dolomite/` overrides the line for `carbonates/`.
 
 ## Reading the report
 
