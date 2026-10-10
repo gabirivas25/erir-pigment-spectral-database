@@ -19,6 +19,7 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 | `scans/` | The 256 original `.dpt` scan files the database was built from |
 | `import_scans.py` | Adds new scans from `scans/` to the database and writes `import_report.md` |
 | `materials.csv` | The materials, their formulas, sources and specimen types, read by the script |
+| `scan_dates.csv` | The date of each group of scans, by folder, read by the script |
 | `WORKFLOW.md` | Step-by-step instructions for adding scans and new materials |
 | `import_report.md` | What the import loaded, corrected and skipped |
 | `pigment_spectral_standards_sqlite_schema.sql` | Creates an empty database in SQLite |

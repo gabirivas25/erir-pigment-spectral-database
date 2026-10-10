@@ -29,7 +29,8 @@ Two safety nets: a run is all or nothing (if anything fails, nothing is saved), 
 | Material name, formula, synthetic or not, description | `materials.csv` |
 | Source, specimen type, specimen notes | `materials.csv` |
 | Instrument (Bruker LUMOS II), operator, scan settings, site (Laboratory), intensity mode (Absorbance) | Fixed in the script |
-| Scan date (`ScanDate`, as YYYY-MM-DD), environment, notes, coordinates, images | Not filled in. Enter by hand if wanted |
+| Scan date (`ScanDate`) | `scan_dates.csv`, by the folder the scan is in |
+| Environment, notes, coordinates, images | Not filled in. Enter by hand if wanted |
 
 ## Naming rules
 
@@ -48,11 +49,12 @@ Scans can be in any subfolder of `scans/`. Folder names do not matter, except th
 
 1. Export the scans from OPUS as absorbance `.dpt` files.
 2. Name them with the pattern above, for example `calcite1.12.dpt` for the next scan of calcite specimen 1. A new specimen is just the next number: `calcite3.0.dpt`.
-3. Copy them into `scans/` (any subfolder).
-4. Run the command. Read the report.
-5. Commit `scans/`, the database and `import_report.md` to git.
+3. Put them in a **new folder inside `scans/`**, named with the date of the scan, for example `scans/2026-11-05/`. Do not add new scans to the older folders (Carbonates, Oxides and so on), because those folders already carry their dates in `scan_dates.csv`.
+4. Add one line to `scan_dates.csv`: the folder and the date, for example `2026-11-05/,2026-11-05`.
+5. Run the command. Read the report.
+6. Commit `scans/`, `scan_dates.csv`, the database and `import_report.md` to git.
 
-Each new ER-IR scan is linked to the ATR standard of the same material automatically. A new specimen is created from the material's row in `materials.csv`.
+Each new scan gets its date from the matching line of `scan_dates.csv` (the longest matching folder wins). If no line matches, the scan is still loaded, the date is left empty and the report lists it under "Scans added without a date". Each new ER-IR scan is linked to the ATR standard of the same material automatically. A new specimen is created from the material's row in `materials.csv`.
 
 ## Case 2: a new material
 
@@ -84,7 +86,7 @@ For a synthetic pigment, the ER-IR and ATR scans share one specimen (one jar of 
 Example: Magnetite has no ATR standard, so its ER-IR scans are unlinked and tagged `needs-atr-recollection`.
 
 1. Collect the ATR spectrum, export it as absorbance, and name it `MagnetitePowder.0.dpt`.
-2. Put it in `scans/PowderATR/` and run the command.
+2. Put it in a new dated folder (see Case 1), add its line to `scan_dates.csv`, and run the command.
 
 The script loads the standard, links every earlier Magnetite ER-IR scan to it, and removes the tag. The report says how many scans were linked.
 
@@ -112,6 +114,7 @@ Not covered yet. The script handles standards, where the material is always know
 |---|---|
 | Added in this run | What was loaded, by material and mode |
 | Skipped: empty or unreadable | Files that are empty or not plain text. Re-export them |
+| Scans added without a date | Scans whose folder has no line in `scan_dates.csv`. Add one and enter the date, or type it into the database |
 | Removed as duplicates | A file with exactly the same intensity values as another one, in the same material and mode. The lowest scan number is kept. Duplicates are not loaded, but the files stay in `scans/` until you delete them |
 | Files whose name matched no rule | Not loaded. Fix the name, or add the material to `materials.csv` |
 | Filename typos corrected | Known misspellings that were read as the right name |

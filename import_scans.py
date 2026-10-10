@@ -4,13 +4,15 @@ import_scans.py: load .dpt scans into the pigment spectral standards database.
 
 USAGE
     python3 import_scans.py SCANS_FOLDER DATABASE.db [--schema SCHEMA.sql]
-                            [--materials materials.csv] [--report REPORT.md] [--dry-run]
+                            [--materials materials.csv] [--dates scan_dates.csv]
+                            [--report REPORT.md] [--dry-run]
 
     SCANS_FOLDER  the folder holding the .dpt scans (subfolders are searched)
     DATABASE.db   the database. If it does not exist it is created from the schema file.
                   If it exists, the new scans are ADDED to it and nothing already in it is changed.
     --schema      the SQLite schema file (only needed when creating a new database)
     --materials   the materials sheet (default: materials.csv next to this script)
+    --dates       the scan-date sheet (default: scan_dates.csv next to this script)
     --report      where to write the report (default: import_report.md next to the database)
     --dry-run     do everything and print the report, but save nothing
 
@@ -22,6 +24,7 @@ WHAT IT DOES
     4. Adds, for each new scan: the measurement, its spectrum, its file record (path, size,
        checksum) and its link to the ATR standard of the same material.
     5. Creates materials, sources and specimens as they are needed, from materials.csv.
+       Each new scan gets its ScanDate from scan_dates.csv (longest matching folder prefix).
     6. Keeps the `needs-atr-recollection` tag up to date and writes a report.
 
 It never modifies the scans. Nothing is converted: spectra are loaded as they are in the file.
@@ -96,6 +99,29 @@ def load_materials(path):
             rows[key] = {k: (v.strip() if v and v.strip() else None) for k, v in r.items()}
             rows[key]["is_synthetic"] = int(r["is_synthetic"])
     return rows
+
+
+def load_dates(path):
+    """Return a list of (prefix, date), longest prefix first. A missing sheet means no dates."""
+    if not os.path.exists(path):
+        return []
+    rows = []
+    with open(path, newline="", encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            prefix, date = (r["path_prefix"] or "").strip(), (r["date"] or "").strip()
+            if not prefix:
+                continue
+            if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+                sys.exit("scan_dates.csv: '%s' is not a date in the form YYYY-MM-DD (row '%s')" % (date, prefix))
+            rows.append((prefix, date))
+    return sorted(rows, key=lambda x: -len(x[0]))
+
+
+def date_for(path, dates):
+    for prefix, date in dates:
+        if path.startswith(prefix):
+            return date
+    return None
 
 
 def read_dpt(path):
@@ -183,11 +209,13 @@ def main():
     ap.add_argument("database")
     ap.add_argument("--schema", default=os.path.join(here, "pigment_spectral_standards_sqlite_schema.sql"))
     ap.add_argument("--materials", default=os.path.join(here, "materials.csv"))
+    ap.add_argument("--dates", default=os.path.join(here, "scan_dates.csv"))
     ap.add_argument("--report")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
     mats = load_materials(a.materials)
+    dates = load_dates(a.dates)
     exists = os.path.exists(a.database)
     if not exists and not os.path.exists(a.schema):
         sys.exit("The database does not exist and the schema file was not found: " + a.schema)
@@ -327,6 +355,7 @@ def main():
         return spec_id[k]
 
     added = collections.Counter()
+    undated = []
     for r in [x for x in records if x["mode"] == "ATR"] + [x for x in records if x["mode"] == "ER-IR"]:
         mode, key = r["mode"], r["material"]
         sid = specimen(key, r["specimen"])
@@ -334,9 +363,12 @@ def main():
         spectrum = json.dumps([[x, y] for x, y in r["pts"]], separators=(",", ":"))
         cur.execute(
             "INSERT INTO Measurement(SpecimenID,InstrumentID,InstrumentConfigurationID,AcquisitionModeID,"
-            "SpectrumData,OperatorID,MeasurementSiteTypeID,ReferenceMeasurementID,SpecimenSpotDescription) "
-            "VALUES (?,?,?,?,?,?,?,?,?)",
-            (sid, instrument_id, cfg_id[mode], mode_id[mode], spectrum, operator_id, site, ref, r["spot"]))
+            "SpectrumData,OperatorID,MeasurementSiteTypeID,ReferenceMeasurementID,SpecimenSpotDescription,ScanDate) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (sid, instrument_id, cfg_id[mode], mode_id[mode], spectrum, operator_id, site, ref, r["spot"],
+             date_for(r["path"], dates)))
+        if date_for(r["path"], dates) is None:
+            undated.append(r["path"])
         mid = cur.lastrowid
         if mode == "ATR":
             atr_meas.setdefault(key, mid)
@@ -391,6 +423,10 @@ def main():
     L += ["- %s, %s: %d" % (m, mode, n) for (m, mode), n in sorted(added.items())] or ["(nothing new)"]
     if relinked:
         L.append("- %d earlier ER-IR scans were linked to an ATR standard that is now available." % relinked)
+    L.append("\n## Scans added without a date (%d)\n" % len(undated))
+    L += ["- `%s`" % x for x in sorted(undated)] or ["(none)"]
+    if undated:
+        L.append("\nAdd a line for them to scan_dates.csv, or type the date into the database (ScanDate).")
     L.append("\n## Database totals per material\n")
     L.append("| Material | ER-IR | ATR | Specimens |\n|---|---|---|---|")
     L += ["| %s | %d | %d | %d |" % r for r in per_mat]
