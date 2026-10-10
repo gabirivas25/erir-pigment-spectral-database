@@ -91,4 +91,3 @@ A new operator should use the same setup. If the instrument or the settings ever
 - Magnetite has no ATR standard. Its ER-IR scans carry the tag `needs-atr-recollection` until one is collected (`WORKFLOW.md`, Workflow 3).
 - The MySQL schema has not been run on a real server.
 - Scans of real objects are not supported by the program yet (`WORKFLOW.md`, Workflow 6).
-- The database is described as absorbance only. The author exported every file as absorbance. About 15 scans have a reflectance-like shape; this was flagged and left as is on the author's decision.
