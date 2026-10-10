@@ -29,7 +29,7 @@ The whole run is one transaction: if anything fails, nothing is saved.
 
 FILENAME RULES  (the key is the file_key column of materials.csv)
     ER-IR, natural     <key><specimen>.<scan>.dpt                 e.g. hematite2.16.dpt
-    ATR standard       <Key>Powder.<n>.dpt, <Key>_ATR.dpt or powder_<key>_<n>.dpt
+    ATR standard       <Key>Powder.<n>.dpt, <Key>_ATR.dpt or <key>_powder_ATR.dpt
                                                                    e.g. AzuritePowder.0.dpt
     synthetic ER-IR    <key>_ER_<n>.<m>.dpt                        e.g. verdigris_ER_3.0.dpt
     synthetic ATR      <key>_ATR.dpt                               e.g. verdigris_ATR.0.dpt
@@ -146,9 +146,9 @@ def classify(rel, mats, corrections=None):
         m = re.match(r"^(%s)powder\.(\d+)$" % alt, fixed)            # AzuritePowder.0
         if m:
             return dict(material=m.group(1), specimen=0, mode="ATR", order=(int(m.group(2)), 0), spot=None)
-        m = re.match(r"^powder_(%s)_(\d+)$" % alt, fixed)             # powder_dolomite_0
+        m = re.match(r"^(%s)_powder_atr$" % alt, fixed)                # dolomite_powder_ATR
         if m:
-            return dict(material=m.group(1), specimen=0, mode="ATR", order=(int(m.group(2)), 0), spot=None)
+            return dict(material=m.group(1), specimen=0, mode="ATR", order=(0, 0), spot=None)
         m = re.match(r"^(%s)_atr$" % alt, fixed)                      # Orpiment_ATR
         if m:
             return dict(material=m.group(1), specimen=0, mode="ATR", order=(0, 0), spot=None)
