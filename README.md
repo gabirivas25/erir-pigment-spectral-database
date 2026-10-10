@@ -16,12 +16,13 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 | File | What it is |
 |---|---|
 | `pigment_spectral_standards.db` | The database, SQLite, ready to open |
-| `scans/` | The 256 `.dpt` scan files the database was built from, named `mineral_ER_IR_specimen_scan.dpt` and `mineral_ATR.dpt` (see `WORKFLOW.md`) |
+| `scans/` | The 256 `.dpt` scan files the database was built from, named `mineral_ER_IR_specimen_scan.dpt` and `mineral_ATR.dpt` (see `NAMING.md`) |
 | `import_scans.py` | Adds new scans from `scans/` to the database and writes `import_report.md` |
 | `materials.csv` | The materials, their formulas, sources and specimen types, read by the script |
 | `scan_dates.csv` | The date of each group of scans, by folder, read by the script |
 | `scan_rename_map.csv` | Old and new filename of every scan, from the renaming to the current naming convention (also records the lazurite point numbers) |
 | `WORKFLOW.md` | Step-by-step instructions for adding scans and new materials |
+| `NAMING.md` | How to name scans, folders and materials |
 | `import_report.md` | What the import loaded, corrected and skipped |
 | `pigment_spectral_standards_sqlite_schema.sql` | Creates an empty database in SQLite |
 | `pigment_spectral_standards_mysql_schema.sql` | The same design for MySQL 8 (schema only) |

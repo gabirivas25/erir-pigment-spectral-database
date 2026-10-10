@@ -32,6 +32,8 @@ The program needs three things, all in this repository:
 
 # Part 1: One-time setup
 
+The program runs on **your computer**, not in the web browser. The browser versions of GitHub and VS Code can show and edit the files, but they cannot run the program, so you need the steps below once.
+
 You do this once on each computer. It takes about 15 minutes.
 
 ## Step 1: Install Python
@@ -101,46 +103,18 @@ You will use only these two commands from now on (Windows: `python` instead of `
 
 ---
 
-# Part 2: Naming your files
+# Part 2: Naming your files and folders
 
-The program reads the filename to find the material, the specimen and whether the scan is ER-IR or ATR. **Files with any other name are not loaded**: the report lists them so you can fix the name.
+The program reads each scan's **filename** to find the material, the specimen and ER-IR or ATR, and the scan's **folder** to find the date. The full rules, with examples and a checklist, are in **[`NAMING.md`](NAMING.md)**. Read it before you add scans. The short version:
 
-| Kind of scan | Filename | Example |
-|---|---|---|
-| ER-IR scan of a mineral | `mineralname_ER_IR_specimen_scannumber.dpt` | `hematite_ER_IR_2_16.dpt` = hematite, specimen 2, scan 16 |
-| ATR standard of a mineral | `mineralname_ATR.dpt` | `hematite_ATR.dpt` |
-| ER-IR scan of a powdered pigment | `synth_pigmentname_ER_IR_scannumber.dpt` | `synth_verdigris_ER_IR_3.dpt` = verdigris, scan 3 |
-| ATR scan of a powdered pigment | `synth_pigmentname_ATR.dpt` | `synth_verdigris_ATR.dpt` |
+| Kind of scan | Filename |
+|---|---|
+| ER-IR scan of a mineral | `mineralname_ER_IR_specimen_scannumber.dpt` (for example `hematite_ER_IR_2_16.dpt`) |
+| ATR standard of a mineral | `mineralname_ATR.dpt` (for example `hematite_ATR.dpt`) |
+| ER-IR scan of a powdered pigment | `synth_pigmentname_ER_IR_scannumber.dpt` (for example `synth_verdigris_ER_IR_3.dpt`) |
+| ATR scan of a powdered pigment | `synth_pigmentname_ATR.dpt` (for example `synth_verdigris_ATR.dpt`) |
 
-Rules:
-- **Every ATR filename contains `ATR`**, so an ATR scan can never be mistaken for an ER-IR scan.
-- `mineralname` and `pigmentname` are the **file_key** of that material in `materials.csv` (for example `hematite`, `synth_verdigris`). Capital letters do not matter.
-- Separate the parts with underscores, with no spaces.
-- A mineral has one ATR standard, so its ATR file has no numbers.
-- A new specimen of the same mineral is the next specimen number: after `calcite_ER_IR_2_10.dpt`, a third specimen starts at `calcite_ER_IR_3_0.dpt`.
-- A powdered pigment is one jar of powder, so it has no specimen number: only a scan number.
-
----
-
-## The `scans` folder
-
-All folder names are lower case. The existing folders are the ones from the first scan session, and each carries its date in `scan_dates.csv`:
-
-```
-scans/
-├── carbonates/                 aragonite, azurite, calcite, cerussite, dolomite, malachite
-│   └── powder_dolomite/        the leftover dolomite scans (specimen 2)
-├── oxides/                     goethite, hematite, magnetite
-├── powder_atr/                 one ATR standard per mineral
-├── silicates/                  lazurite
-├── sulfides/                   cinnabar, orpiment
-└── synthetics/
-    ├── malachite/              synthetic malachite
-    ├── ultramarine/            synthetic ultramarine
-    └── verdigris/              verdigris
-```
-
-New scans go in a **new folder named with the date** (for example `scans/2026-11-05/`), not in these folders.
+New scans go in a **new folder named with the date**, for example `scans/2026-11-05/`, with one line for it in `scan_dates.csv`.
 
 ---
 
@@ -213,7 +187,7 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
 ### Step 2: Export and name the scans
 
 1. Export the scans from OPUS as absorbance `.dpt` files.
-2. Name them with the pattern in Part 2, using the `file_key` from step 1:
+2. Name them with the pattern in Part 2 (full rules in [`NAMING.md`](NAMING.md)), using the `file_key` from step 1:
    - `realgar_ER_IR_1_0.dpt` and `realgar_ER_IR_1_1.dpt` for the ER-IR scans (specimen 1, scans 0 and 1)
    - `realgar_ATR.dpt` for the ATR standard
 
