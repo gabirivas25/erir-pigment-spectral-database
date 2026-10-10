@@ -30,15 +30,11 @@ WHAT IT DOES
 It never modifies the scans. Nothing is converted: spectra are loaded as they are in the file.
 The whole run is one transaction: if anything fails, nothing is saved.
 
-FILENAME RULES  (the key is the file_key column of materials.csv)
-    ER-IR, natural     <key><specimen>.<scan>.dpt                 e.g. hematite2.16.dpt
-    ATR standard       <Key>Powder.<n>.dpt, <Key>_ATR.dpt or <key>_powder_ATR.dpt
-                                                                   e.g. AzuritePowder.0.dpt
-    synthetic ER-IR    <key>_ER_<n>.<m>.dpt                        e.g. verdigris_ER_3.0.dpt
-    synthetic ATR      <key>_ATR.dpt                               e.g. verdigris_ATR.0.dpt
-    Names are lower-cased, spaces removed, and the misspellings in TYPOS are corrected
-    (every correction is listed in the report).
-    A few legacy lazurite and dolomite names from the first scan session are also understood.
+FILENAME RULES  (the key is the file_key column of materials.csv; capitals do not matter)
+    ER-IR, mineral              <key>_ER_IR_<specimen>_<scan>.dpt     e.g. hematite_ER_IR_2_16.dpt
+    ATR standard, mineral       <key>_ATR.dpt                          e.g. hematite_ATR.dpt
+    ER-IR, synthetic pigment    <synth_key>_ER_IR_<scan>.dpt           e.g. synth_verdigris_ER_IR_3.dpt
+    ATR, synthetic pigment      <synth_key>_ATR.dpt                    e.g. synth_verdigris_ATR.dpt
 """
 import argparse
 import collections
@@ -53,20 +49,6 @@ import sys
 # ---------------------------------------------------------------------------
 # Fixed facts. Materials, formulas, sources and specimen types live in materials.csv.
 # ---------------------------------------------------------------------------
-
-TYPOS = {            # misspelling -> correct spelling (applied to lower-cased filenames)
-    "lasurite": "lazurite",
-    "cinnabr": "cinnabar",
-    "hematitie": "hematite",
-    "verdigirs": "verdigris",
-    "dolomiter": "dolomite",
-    "dolemite": "dolomite",
-}
-
-# A scan that exists under another name in the database
-RENAME = {"PowderATR/OrpimentPowder.1.dpt": "PowderATR/Orpiment_ATR.dpt"}
-# Scans that are never loaded, with the reason
-NOT_USED = {"PowderATR/OrpimentPowder.0.dpt": "Orpiment: OrpimentPowder.1.dpt is the standard"}
 
 OPERATOR = ("Maria Gabriela Rivas Carmona", "gabrielarivas25@gmail.com", "University of Padova")
 INSTRUMENT = ("FTIR microscope", "LUMOS II", "Bruker")
@@ -85,9 +67,15 @@ def load_materials(path):
     if not os.path.exists(path):
         sys.exit("Materials sheet not found: " + path)
     rows = {}
+    need = ["file_key", "material_name", "chemical_formula", "is_synthetic", "description", "source",
+            "specimen_type", "preparation_notes", "source_notes"]
     with open(path, newline="", encoding="utf-8") as fh:
-        for r in csv.DictReader(fh):
-            key = r["file_key"].strip().lower()
+        rd = csv.DictReader(fh)
+        missing = [c for c in need if c not in (rd.fieldnames or [])]
+        if missing:
+            sys.exit("materials.csv is missing these columns in its first line: " + ", ".join(missing))
+        for r in rd:
+            key = (r["file_key"] or "").strip().lower()
             if not key:
                 continue
             if key in rows:
@@ -147,58 +135,29 @@ def spectrum_hash(ys):
     return hashlib.md5(repr([round(y, 8) for y in ys]).encode()).hexdigest()
 
 
-def classify(rel, mats, corrections=None):
+def classify(rel, mats):
     """Describe a file from its name, or return None if no rule matches."""
-    corrections = corrections if corrections is not None else []
-    folder, fname = os.path.split(rel)
-    base = fname[:-4] if fname.lower().endswith(".dpt") else fname
-    key = base.lower().replace(" ", "")
-    fixed = key
-    for bad, good in TYPOS.items():
-        if bad in fixed:
-            fixed = fixed.replace(bad, good)
-    if fixed != key:
-        corrections.append((fname, fixed))
+    base = os.path.basename(rel)
+    name = (base[:-4] if base.lower().endswith(".dpt") else base).lower().replace(" ", "")
     natural = [k for k, v in mats.items() if not v["is_synthetic"]]
     synth = [k for k, v in mats.items() if v["is_synthetic"]]
-
-    if synth:   # synthetic powders: <key>_ER_<n>.<m>  or  <key>_ATR[.<n>]
-        m = re.match(r"^(%s)_(atr|er)(?:_(\d+))?(?:\.(\d+))?$" % "|".join(map(re.escape, synth)), fixed)
-        if m:
-            return dict(material=m.group(1), specimen=1, mode="ATR" if m.group(2) == "atr" else "ER-IR",
-                        order=(int(m.group(3) or 0), int(m.group(4) or 0)), spot=None)
     if natural:
         alt = "|".join(map(re.escape, natural))
-        m = re.match(r"^(%s)powder\.(\d+)$" % alt, fixed)            # AzuritePowder.0
-        if m:
-            return dict(material=m.group(1), specimen=0, mode="ATR", order=(int(m.group(2)), 0), spot=None)
-        m = re.match(r"^(%s)_powder_atr$" % alt, fixed)                # dolomite_powder_ATR
-        if m:
-            return dict(material=m.group(1), specimen=0, mode="ATR", order=(0, 0), spot=None)
-        m = re.match(r"^(%s)_atr$" % alt, fixed)                      # Orpiment_ATR
-        if m:
-            return dict(material=m.group(1), specimen=0, mode="ATR", order=(0, 0), spot=None)
-    # legacy names from the first scan session
-    if "dolomite" in mats:
-        m = re.match(r"^dolomite_er_(\d+)\.0$", fixed)
-        if m and "powder_dolomite" in folder.lower():
-            return dict(material="dolomite", specimen=2, mode="ER-IR", order=(int(m.group(1)), 0), spot=None)
-    if "lazurite" in mats:
-        m = re.match(r"^lazurite(?:frag1|sample|samp1)?_p(\d+)(?:\.(\d+))?$", fixed)
-        if m:
-            return dict(material="lazurite", specimen=1, mode="ER-IR",
-                        order=(int(m.group(1)), int(m.group(2) or 0)), spot="point %s" % m.group(1))
-        m = re.match(r"^lazurite_samp2_p(\d+)(?:\.(\d+))?$", fixed)
-        if m:
-            return dict(material="lazurite", specimen=2, mode="ER-IR",
-                        order=(int(m.group(1)), int(m.group(2) or 0)), spot="point %s" % m.group(1))
-        if fixed == "lazurite1.1":
-            return dict(material="lazurite", specimen=1, mode="ER-IR", order=(1, 1), spot="point 1")
-    if natural:
-        m = re.match(r"^(%s)(\d+)\.(\d+)$" % "|".join(map(re.escape, natural)), fixed)   # hematite2.16
+        m = re.match(r"^(%s)_er_ir_(\d+)_(\d+)$" % alt, name)         # hematite_ER_IR_2_16
         if m:
             return dict(material=m.group(1), specimen=int(m.group(2)), mode="ER-IR",
                         order=(int(m.group(3)), 0), spot=None)
+        m = re.match(r"^(%s)_atr$" % alt, name)                        # hematite_ATR
+        if m:
+            return dict(material=m.group(1), specimen=0, mode="ATR", order=(0, 0), spot=None)
+    if synth:
+        alt = "|".join(map(re.escape, synth))
+        m = re.match(r"^(%s)_er_ir_(\d+)$" % alt, name)               # synth_verdigris_ER_IR_3
+        if m:
+            return dict(material=m.group(1), specimen=1, mode="ER-IR", order=(int(m.group(2)), 0), spot=None)
+        m = re.match(r"^(%s)_atr$" % alt, name)                        # synth_verdigris_ATR
+        if m:
+            return dict(material=m.group(1), specimen=1, mode="ATR", order=(0, 0), spot=None)
     return None
 
 
@@ -221,7 +180,7 @@ def main():
         sys.exit("The database does not exist and the schema file was not found: " + a.schema)
 
     # ---- read and classify the scans ----
-    corrections, unmatched, unreadable, not_used = [], [], [], []
+    unmatched, unreadable = [], []
     records = []
     for root, _, files in os.walk(a.scans):
         for f in sorted(files):
@@ -229,11 +188,7 @@ def main():
                 continue
             full = os.path.join(root, f)
             rel = os.path.relpath(full, a.scans).replace(os.sep, "/")
-            tail = "/".join(rel.split("/")[-2:])
-            if tail in NOT_USED or rel in NOT_USED:
-                not_used.append((rel, NOT_USED.get(tail) or NOT_USED.get(rel)))
-                continue
-            info = classify(rel, mats, corrections)
+            info = classify(rel, mats)
             if info is None:
                 unmatched.append(rel)
                 continue
@@ -241,7 +196,7 @@ def main():
             if pts is None:
                 unreadable.append((rel, os.path.getsize(full)))
                 continue
-            info.update(rel=rel, full=full, pts=pts, path=RENAME.get(tail, RENAME.get(rel, rel)))
+            info.update(rel=rel, full=full, pts=pts, path=rel)
             records.append(info)
 
     # ---- open or create the database ----
@@ -329,7 +284,7 @@ def main():
         if key not in mat_id:
             m = mats[key]
             cur.execute("INSERT INTO Material(MaterialName,ChemicalFormula,IsSynthetic,Description) VALUES (?,?,?,?)",
-                        (m["material_name"], m["formula"], m["is_synthetic"], m["description"]))
+                        (m["material_name"], m["chemical_formula"], m["is_synthetic"], m["description"]))
             mat_id[key] = cur.lastrowid
         return mat_id[key]
 
@@ -434,15 +389,11 @@ def main():
     L += ["- `%s` (%d bytes)" % x for x in unreadable] or ["(none)"]
     L.append("\n## Removed as duplicates (%d)\n" % len(duplicates))
     L += ["- `%s` is identical to `%s`" % x for x in sorted(duplicates)] or ["(none)"]
-    L.append("\n## Not used on purpose (%d)\n" % len(not_used))
-    L += ["- `%s`: %s" % x for x in not_used] or ["(none)"]
     L.append("\n## Files whose name matched no rule, not loaded (%d)\n" % len(unmatched))
     L += ["- `%s`" % x for x in sorted(unmatched)] or ["(none)"]
     if unmatched:
         L.append("\nIf these are a new material, add a row for it to materials.csv. "
                  "Otherwise rename the files to the pattern in WORKFLOW.md.")
-    L.append("\n## Filename typos corrected (%d)\n" % len(corrections))
-    L += ["- `%s` read as `%s`" % x for x in sorted(set(corrections))] or ["(none)"]
     L.append("\n## Things to check\n")
     L.append("- Materials with ER-IR scans but no ATR standard (tagged `%s`): %s"
              % (TAG_MISSING_ATR, ", ".join(no_atr) or "none"))

@@ -103,16 +103,22 @@ You will use only these two commands from now on (Windows: `python` instead of `
 
 # Part 2: Naming your files
 
-The program reads the filename to find the material, the specimen and whether it is ER-IR or ATR. Capital letters do not matter. In the table, **key** means the `file_key` column of `materials.csv` (for example `hematite`).
+The program reads the filename to find the material, the specimen and whether the scan is ER-IR or ATR. **Files with any other name are not loaded**: the report lists them so you can fix the name.
 
 | Kind of scan | Filename | Example |
 |---|---|---|
-| ER-IR, natural mineral | `<key><specimen>.<scan>.dpt` | `hematite2.16.dpt` = hematite, specimen 2, scan 16 |
-| ATR standard, natural mineral | `<Key>Powder.<n>.dpt`, `<Key>_ATR.dpt` or `<key>_powder_ATR.dpt` | `AzuritePowder.0.dpt`, `dolomite_powder_ATR.dpt` |
-| ER-IR, synthetic pigment | `<key>_ER_<n>.<m>.dpt` | `verdigris_ER_3.0.dpt` |
-| ATR, synthetic pigment | `<key>_ATR.dpt` | `verdigris_ATR.0.dpt` |
+| ER-IR scan of a mineral | `mineralname_ER_IR_specimen_scannumber.dpt` | `hematite_ER_IR_2_16.dpt` = hematite, specimen 2, scan 16 |
+| ATR standard of a mineral | `mineralname_ATR.dpt` | `hematite_ATR.dpt` |
+| ER-IR scan of a powdered pigment | `synth_pigmentname_ER_IR_scannumber.dpt` | `synth_verdigris_ER_IR_3.dpt` = verdigris, scan 3 |
+| ATR scan of a powdered pigment | `synth_pigmentname_ATR.dpt` | `synth_verdigris_ATR.dpt` |
 
-A new specimen of the same material is just the next number: after `calcite2.10.dpt`, a third specimen starts at `calcite3.0.dpt`.
+Rules:
+- **Every ATR filename contains `ATR`**, so an ATR scan can never be mistaken for an ER-IR scan.
+- `mineralname` and `pigmentname` are the **file_key** of that material in `materials.csv` (for example `hematite`, `synth_verdigris`). Capital letters do not matter.
+- Separate the parts with underscores, with no spaces.
+- A mineral has one ATR standard, so its ATR file has no numbers.
+- A new specimen of the same mineral is the next specimen number: after `calcite_ER_IR_2_10.dpt`, a third specimen starts at `calcite_ER_IR_3_0.dpt`.
+- A powdered pigment is one jar of powder, so it has no specimen number: only a scan number.
 
 ---
 
@@ -129,7 +135,7 @@ Before each workflow, do these three things:
 Example: three new calcite scans, measured on 5 November 2026.
 
 1. **Export the scans from OPUS as absorbance `.dpt` files.**
-2. **Name them** with the pattern in Part 2, for example `calcite1.12.dpt`, `calcite1.13.dpt`, `calcite1.14.dpt` (the next scans of calcite specimen 1).
+2. **Name them** with the pattern in Part 2, for example `calcite_ER_IR_1_12.dpt`, `calcite_ER_IR_1_13.dpt`, `calcite_ER_IR_1_14.dpt` (the next scans of calcite specimen 1).
 3. **Make a new folder** inside the `scans` folder, named with the date of the scan: `scans/2026-11-05`. Put the new files inside it. Do **not** put new scans in the older folders (Carbonates, Oxides, Silicates, Sulfides, PowderATR, Synthetics): those folders already carry an older date.
 4. **Tell the program the date.** Open `scan_dates.csv` (see **How to edit the two sheets** below) and add one line at the bottom:
    ```
@@ -153,15 +159,21 @@ Each new ER-IR scan is linked to the ATR standard of the same material automatic
 
 ## Workflow 2: A material that is not in the database yet
 
-Example: a new pigment, realgar.
+Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR standard, measured on 5 November 2026.
 
-1. **Add one line to `materials.csv`** (see **How to edit the two sheets**). The columns are:
+**Before you start** (every time): close DB Browser, click **Fetch origin** (or **Pull origin**) in GitHub Desktop, and keep the Terminal ready (Part 1, Step 3).
+
+### Step 1: Add the material to `materials.csv`
+
+1. Open the repository folder in Finder (Mac) or File Explorer (Windows).
+2. Right-click `materials.csv`, choose **Open With**, then **TextEdit** (Mac) or **Notepad** (Windows). On a Mac, click **Format**, then **Make Plain Text**.
+3. Scroll to the bottom. Click at the very end of the last line, press **Enter** to start a new line, and type one new line for your material. The columns, in this order, are:
 
    | Column | What to type | Example |
    |---|---|---|
-   | `file_key` | The word the filenames start with: lower case, no spaces | `realgar` |
+   | `file_key` | The mineral name used at the start of the scan filenames. Lower case, no spaces. For a powdered pigment it must start with `synth_` | `realgar` |
    | `material_name` | The name shown in the database | `Realgar` |
-   | `formula` | Plain text, numbers written inline | `As4S4` |
+   | `chemical_formula` | Plain text, numbers written inline, no subscripts | `As4S4` |
    | `is_synthetic` | `1` if synthetic, `0` if natural | `0` |
    | `description` | A short description, or leave empty | `Arsenic sulfide` |
    | `source` | Who supplied it: `UniPD mineral collection`, `Kremer`, `Maimeri`, or a new name. Empty = not recorded | `UniPD mineral collection` |
@@ -169,22 +181,82 @@ Example: a new pigment, realgar.
    | `preparation_notes` | For example `Ground/prepared for FTIR analysis`, or empty | `Ground/prepared for FTIR analysis` |
    | `source_notes` | Product number or label text, or empty | |
 
-   The whole line for realgar:
+   The whole line for realgar (commas between the columns, and an empty last column after the final comma):
    ```
    realgar,Realgar,As4S4,0,Arsenic sulfide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
    ```
-2. **Follow Workflow 1 from step 1.** Name the scans with the new key: `realgar1.0.dpt` for ER-IR, `RealgarPowder.0.dpt` for the ATR standard.
+   A value that contains a comma must be inside double quotes, for example `"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2"`.
+4. Save the file (**File, then Save**). If a window asks about the format, keep **plain text / CSV**.
 
-If a scan's material has no line in `materials.csv`, the file is **not loaded**. It appears in the report under "Files whose name matched no rule". Nothing is guessed. Add the line and run the command again.
+### Step 2: Export and name the scans
 
-For a **synthetic pigment**, the ER-IR and ATR scans share one specimen (one jar of powder), so use the synthetic filenames from Part 2.
+1. Export the scans from OPUS as absorbance `.dpt` files.
+2. Name them with the pattern in Part 2, using the `file_key` from step 1:
+   - `realgar_ER_IR_1_0.dpt` and `realgar_ER_IR_1_1.dpt` for the ER-IR scans (specimen 1, scans 0 and 1)
+   - `realgar_ATR.dpt` for the ATR standard
+
+### Step 3: Put the scans in a new dated folder
+
+1. Open the `scans` folder in the repository.
+2. Create a new folder named with the scan date: `2026-11-05`.
+3. Copy the three files into it.
+
+### Step 4: Tell the program the date
+
+1. Open `scan_dates.csv` the same way as in step 1 (plain-text editor).
+2. At the end of the last line press **Enter** and type:
+   ```
+   2026-11-05/,2026-11-05
+   ```
+   The first part is the folder name followed by a slash, the second part is the date (year-month-day). Save the file.
+
+### Step 5: Do a trial run
+
+1. Open the Terminal inside the repository folder (Part 1, Step 3). It should show the folder name `erir-pigment-spectral-database`.
+2. Type this command and press **Enter** (Windows: `python` instead of `python3`):
+   ```
+   python3 import_scans.py scans pigment_spectral_standards.db --dry-run
+   ```
+   `--dry-run` means "show me, but do not save anything".
+3. Read the report that appears in the Terminal. Under **Added in this run** you should see:
+   ```
+   - Realgar, ATR: 1
+   - Realgar, ER-IR: 2
+   ```
+   Under **Files whose name matched no rule** and **Scans added without a date** you should see `(none)`.
+4. If your scans are listed under "matched no rule", the filename does not start with the `file_key` you typed in `materials.csv`, or it does not follow the pattern in Part 2. Fix the name or the key, and do the trial run again.
+
+### Step 6: Run it for real
+
+1. In the same Terminal window, type the same command **without** `--dry-run` and press **Enter**:
+   ```
+   python3 import_scans.py scans pigment_spectral_standards.db
+   ```
+2. The third line of the report now says `Saved` and `3 scans added`.
+
+### Step 7: Check the result
+
+1. Open `pigment_spectral_standards.db` in DB Browser for SQLite.
+2. Click the **Browse Data** tab and choose the table **Material**. The last row should be Realgar, with its formula.
+3. Choose the table **Measurement**. The last three rows are the new scans. The two ER-IR scans have a number in the column `ReferenceMeasurementID`: that is the link to the realgar ATR standard.
+4. Close DB Browser without changing anything.
+
+### Step 8: Save your work to GitHub
+
+1. Open GitHub Desktop. It lists the changed files: `materials.csv`, `scan_dates.csv`, the database, `import_report.md` and the three new scans.
+2. Type a short description in the **Summary** box, for example `Add realgar`.
+3. Click **Commit to main**, then click **Push origin**.
+
+**For a powdered pigment** (synthetic), use `is_synthetic` = `1`, a `file_key` that starts with `synth_` (for example `synth_cinnabar`), and the filenames `synth_cinnabar_ER_IR_1.dpt` and `synth_cinnabar_ATR.dpt`. The ER-IR and ATR scans then share one specimen (one jar of powder).
+
+**If you forget Step 1:** the scans are not loaded, and the report lists them under "Files whose name matched no rule". Nothing is guessed. Do Step 1, then run the command again.
 
 ## Workflow 3: An ATR standard collected later
 
 Example: Magnetite has no ATR standard, so its ER-IR scans are unlinked and tagged `needs-atr-recollection`.
 
 1. Collect the ATR spectrum and export it from OPUS as absorbance.
-2. Name it `MagnetitePowder.0.dpt`.
+2. Name it `magnetite_ATR.dpt`.
 3. Follow Workflow 1 from step 3 (new dated folder, line in `scan_dates.csv`, dry run, run, commit).
 
 The program loads the standard, links **every earlier Magnetite ER-IR scan** to it, and removes the tag. The report says how many scans were linked.
@@ -199,7 +271,7 @@ The program skips any file whose path is already in the database, so a corrected
 2. Click the **Execute SQL** tab.
 3. Delete everything in the box and paste the two lines below, changing only the file path in the first line to the scan you are replacing:
    ```sql
-   DELETE FROM SpectralFile WHERE FilePath = 'Oxides/hematite2.3.dpt';
+   DELETE FROM SpectralFile WHERE FilePath = 'Oxides/hematite_ER_IR_2_3.dpt';
    DELETE FROM Measurement WHERE MeasurementID NOT IN (SELECT MeasurementID FROM SpectralFile);
    ```
 4. Click the **play button** (the triangle) above the box. You should see `Execution finished without errors`.
