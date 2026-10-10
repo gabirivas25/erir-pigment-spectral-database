@@ -13,7 +13,12 @@ Files written to OUTPUT_FOLDER:
     materials.json      one entry per material (name, formula, source, colour, scan counts)
     scans.json          one entry per scan (metadata only, no spectrum)
     match_index.json    every ER-IR spectrum resampled to one common wavenumber grid, for matching
-    spectra/<id>.json   the full spectrum of one scan (wavenumber and intensity lists)
+    spectra_er_ir.json  the full spectra of all ER-IR scans (see format below)
+    spectra_atr.json    the full spectra of all ATR scans (same format)
+
+Format of spectra_*.json: {"axes": [[wavenumbers...], ...],
+    "spectra": {"<scan id>": {"axis": <index into axes>, "intensity": [...]}}}
+Scans measured on the same wavenumber axis share one entry in "axes".
 """
 import bisect
 import json
@@ -64,7 +69,8 @@ def main():
     out = sys.argv[2] if len(sys.argv) > 2 else "ui_data"
     if not os.path.exists(db):
         sys.exit("Database not found: " + db)
-    os.makedirs(os.path.join(out, "spectra"), exist_ok=True)
+    os.makedirs(out, exist_ok=True)
+    bundles = {"ER-IR": {"axes": [], "spectra": {}}, "ATR": {"axes": [], "spectra": {}}}
     con = sqlite3.connect(db)
     con.row_factory = sqlite3.Row
 
@@ -116,10 +122,12 @@ def main():
 
         data = json.loads(r["SpectrumData"])
         data.sort()
-        with open(os.path.join(out, "spectra", sid + ".json"), "w") as fh:
-            json.dump({"id": sid, "mode": mode,
-                       "wavenumber": [round(p[0], 3) for p in data],
-                       "intensity": [round(p[1], 5) for p in data]}, fh, separators=(",", ":"))
+        b = bundles[mode]
+        axis = [round(p[0], 3) for p in data]
+        if axis not in b["axes"]:
+            b["axes"].append(axis)
+        b["spectra"][sid] = {"axis": b["axes"].index(axis),
+                             "intensity": [round(p[1], 5) for p in data]}
 
         if mode == "ER-IR":
             match_index.append({"id": sid, "material": key, "intensity": resample(data)})
@@ -149,6 +157,8 @@ def main():
     json.dump(sorted(materials.values(), key=lambda m: m["name"]),
               open(os.path.join(out, "materials.json"), "w"), indent=1)
     json.dump(scans, open(os.path.join(out, "scans.json"), "w"), indent=1)
+    for mode, fname in (("ER-IR", "spectra_er_ir.json"), ("ATR", "spectra_atr.json")):
+        json.dump(bundles[mode], open(os.path.join(out, fname), "w"), separators=(",", ":"))
     json.dump({"grid": {"start": GRID_START, "end": GRID_END, "points": GRID_POINTS,
                         "unit": "cm-1", "intensityMode": "Absorbance"},
                "spectra": match_index},
