@@ -1,126 +1,269 @@
 # Workflow: adding scans to the database
 
-Everything here uses one script, `import_scans.py`, and one sheet, `materials.csv`. The script **adds** new scans to the existing database. It never rebuilds it and never changes what is already loaded.
+This guide is written for someone who has never used a terminal. Every step says exactly what to click or type. If you only want the short version, jump to **Quick reference** at the end of the setup.
 
-## The one command
+## What happens when you add scans
 
-Run it from the repository folder:
+You put new scan files (`.dpt`) in the `scans/` folder and run **one command**. A small program, `import_scans.py`, reads the files and **adds** them to the database. It never rebuilds the database and never changes what is already in it.
 
-```
-python3 import_scans.py scans pigment_spectral_standards.db
-```
+The program needs three things, all in this repository:
 
-It prints a report and saves it as `import_report.md`. To see what it would do without saving anything, add `--dry-run`:
+| File | What it holds |
+|---|---|
+| `scans/` | The scan files themselves |
+| `materials.csv` | One line per material: name, formula, source, specimen type |
+| `scan_dates.csv` | The date of each group of scans |
+
+## What the program fills in, and what it does not
+
+| Information | Where it comes from |
+|---|---|
+| The spectrum, file path, size, checksum | The `.dpt` file |
+| ER-IR or ATR | The filename (see **Naming your files**) |
+| Material and specimen number | The filename |
+| Link from an ER-IR scan to its ATR standard | Found automatically: same material |
+| Material name, formula, synthetic or not, description | `materials.csv` |
+| Source, specimen type, specimen notes | `materials.csv` |
+| Scan date (`ScanDate`) | `scan_dates.csv`, by the folder the scan is in |
+| Instrument (Bruker LUMOS II), operator, scan settings, site (Laboratory), intensity mode (Absorbance) | Fixed in the program |
+| Environment, notes, coordinates, images | Not filled in. Type them into the database by hand if you want them |
+
+---
+
+# Part 1: One-time setup
+
+You do this once on each computer. It takes about 15 minutes.
+
+## Step 1: Install Python
+
+Python is the free program that runs `import_scans.py`.
+
+1. Open the Terminal.
+   - **Mac:** press the Command key and the space bar, type `Terminal`, press Enter.
+   - **Windows:** press the Windows key, type `cmd`, press Enter. A black window opens.
+2. Check whether Python is already installed. Type this and press Enter:
+   - **Mac:** `python3 --version`
+   - **Windows:** `python --version`
+3. If you see a line like `Python 3.11.4` (any number 3.8 or higher), Python is installed. Go to Step 2.
+4. If you see an error or a lower number, go to <https://www.python.org/downloads/>, click the big yellow **Download Python** button, open the file that downloads, and follow the installer.
+   - **Windows only:** on the first installer screen, tick the box **Add python.exe to PATH** before clicking Install.
+5. Close the Terminal, open it again and repeat step 2 to check.
+
+> **Windows users:** wherever this guide says `python3`, type `python` instead.
+
+## Step 2: Get the repository onto your computer
+
+The repository is the folder with everything in it. The easiest way is GitHub Desktop.
+
+1. Go to <https://desktop.github.com/>, download GitHub Desktop and install it.
+2. Open it and sign in with your GitHub account.
+3. Click **File**, then **Clone repository**.
+4. Choose the tab **GitHub.com**, click `gabirivas25/erir-pigment-spectral-database`, choose where to save it (for example your Documents folder) and click **Clone**.
+5. Wait until it finishes. You now have a folder called `erir-pigment-spectral-database`.
+
+## Step 3: Open a Terminal inside that folder
+
+You need the Terminal to be "in" the repository folder.
+
+- **Mac:**
+  1. Open the Terminal.
+  2. Type `cd ` (the letters c, d and then **one space**). Do not press Enter yet.
+  3. Open Finder, find the folder `erir-pigment-spectral-database` and **drag the folder into the Terminal window**. Its path appears after `cd `.
+  4. Press Enter.
+- **Windows:**
+  1. Open the folder `erir-pigment-spectral-database` in File Explorer.
+  2. Click the address bar at the top (where the folder path is shown), type `cmd` and press Enter. A black window opens, already inside the folder.
+
+To check you are in the right place, type `ls` (Mac) or `dir` (Windows) and press Enter. You should see `import_scans.py`, `materials.csv`, `scans` and `WORKFLOW.md` in the list.
+
+## Step 4: Test that everything works
+
+Type this and press Enter (Windows: use `python`):
 
 ```
 python3 import_scans.py scans pigment_spectral_standards.db --dry-run
 ```
 
-Two safety nets: a run is all or nothing (if anything fails, nothing is saved), and the database is in git, so a bad run can be undone by restoring the file.
+`--dry-run` means "show me what you would do, but save nothing". After a few seconds a report appears. The third line should say something like:
 
-## What the script fills in, and where it comes from
+> DRY RUN, nothing saved. **0 scans added**, 256 skipped because they were already in the database.
 
-| Information | Where it comes from |
+If you see that, setup is finished. If you see an error, copy the whole message and send it to Claude.
+
+## Quick reference
+
+You will use only these two commands from now on (Windows: `python` instead of `python3`):
+
+| What you want | Command |
 |---|---|
-| The spectrum, file path, size, checksum | The `.dpt` file |
-| ER-IR or ATR | The filename (see the naming table) |
-| Material and specimen number | The filename |
-| Link from an ER-IR scan to its ATR standard | Same material, found automatically |
-| Material name, formula, synthetic or not, description | `materials.csv` |
-| Source, specimen type, specimen notes | `materials.csv` |
-| Instrument (Bruker LUMOS II), operator, scan settings, site (Laboratory), intensity mode (Absorbance) | Fixed in the script |
-| Scan date (`ScanDate`) | `scan_dates.csv`, by the folder the scan is in |
-| Environment, notes, coordinates, images | Not filled in. Enter by hand if wanted |
+| See what would happen, save nothing | `python3 import_scans.py scans pigment_spectral_standards.db --dry-run` |
+| Add the new scans for real | `python3 import_scans.py scans pigment_spectral_standards.db` |
 
-## Naming rules
+---
 
-The script reads the filename. The key is the `file_key` column of `materials.csv`. Upper or lower case does not matter.
+# Part 2: Naming your files
+
+The program reads the filename to find the material, the specimen and whether it is ER-IR or ATR. Capital letters do not matter. In the table, **key** means the `file_key` column of `materials.csv` (for example `hematite`).
 
 | Kind of scan | Filename | Example |
 |---|---|---|
-| ER-IR, natural mineral | `<key><specimen>.<scan>.dpt` | `hematite2.16.dpt` is hematite, specimen 2, scan 16 |
+| ER-IR, natural mineral | `<key><specimen>.<scan>.dpt` | `hematite2.16.dpt` = hematite, specimen 2, scan 16 |
 | ATR standard, natural mineral | `<Key>Powder.<n>.dpt`, `<Key>_ATR.dpt` or `<key>_powder_ATR.dpt` | `AzuritePowder.0.dpt`, `dolomite_powder_ATR.dpt` |
 | ER-IR, synthetic pigment | `<key>_ER_<n>.<m>.dpt` | `verdigris_ER_3.0.dpt` |
 | ATR, synthetic pigment | `<key>_ATR.dpt` | `verdigris_ATR.0.dpt` |
 
-Scans can be in any subfolder of `scans/`. Folder names do not matter, except that the folder is stored as part of the file path.
+A new specimen of the same material is just the next number: after `calcite2.10.dpt`, a third specimen starts at `calcite3.0.dpt`.
 
-## Case 1: new scans of a material already in the database
+---
 
-1. Export the scans from OPUS as absorbance `.dpt` files.
-2. Name them with the pattern above, for example `calcite1.12.dpt` for the next scan of calcite specimen 1. A new specimen is just the next number: `calcite3.0.dpt`.
-3. Put them in a **new folder inside `scans/`**, named with the date of the scan, for example `scans/2026-11-05/`. Do not add new scans to the older folders (Carbonates, Oxides and so on), because those folders already carry their dates in `scan_dates.csv`.
-4. Add one line to `scan_dates.csv`: the folder and the date, for example `2026-11-05/,2026-11-05`.
-5. Run the command. Read the report.
-6. Commit `scans/`, `scan_dates.csv`, the database and `import_report.md` to git.
+# Part 3: Step-by-step workflows
 
-Each new scan gets its date from the matching line of `scan_dates.csv` (the longest matching folder wins). If no line matches, the scan is still loaded, the date is left empty and the report lists it under "Scans added without a date". Each new ER-IR scan is linked to the ATR standard of the same material automatically. A new specimen is created from the material's row in `materials.csv`.
+Before each workflow, do these three things:
 
-## Case 2: a new material
+1. **Close DB Browser for SQLite** if it is open. The program cannot write to a database that is open with unsaved changes.
+2. In GitHub Desktop, click **Fetch origin**, and if the button changes to **Pull origin**, click it. This makes sure you have the latest version.
+3. Open the Terminal inside the repository folder (Part 1, Step 3).
+
+## Workflow 1: New scans of a material that is already in the database
+
+Example: three new calcite scans, measured on 5 November 2026.
+
+1. **Export the scans from OPUS as absorbance `.dpt` files.**
+2. **Name them** with the pattern in Part 2, for example `calcite1.12.dpt`, `calcite1.13.dpt`, `calcite1.14.dpt` (the next scans of calcite specimen 1).
+3. **Make a new folder** inside the `scans` folder, named with the date of the scan: `scans/2026-11-05`. Put the new files inside it. Do **not** put new scans in the older folders (Carbonates, Oxides, Silicates, Sulfides, PowderATR, Synthetics): those folders already carry an older date.
+4. **Tell the program the date.** Open `scan_dates.csv` (see **How to edit the two sheets** below) and add one line at the bottom:
+   ```
+   2026-11-05/,2026-11-05
+   ```
+   The first part is the folder name, followed by a slash. The second part is the date, written year-month-day.
+5. **Check first.** In the Terminal, type the dry-run command and press Enter:
+   ```
+   python3 import_scans.py scans pigment_spectral_standards.db --dry-run
+   ```
+   Read the report (see **Reading the report**). You want to see your three scans under "Added in this run", and nothing under "Files whose name matched no rule" or "Scans added without a date".
+6. **Run it for real**, the same command without `--dry-run`:
+   ```
+   python3 import_scans.py scans pigment_spectral_standards.db
+   ```
+   The third line of the report now says `Saved` and `3 scans added`.
+7. **Check in DB Browser** (optional but recommended): open `pigment_spectral_standards.db`, click the **Browse Data** tab, choose the table **Measurement** and look at the last rows. The new scans are at the bottom.
+8. **Save your work to GitHub.** Open GitHub Desktop. It lists the changed files (the new scans, `scan_dates.csv`, the database and `import_report.md`). Type a short description in the **Summary** box, for example `Add calcite scans from 5 November`, click **Commit to main**, then click **Push origin**.
+
+Each new ER-IR scan is linked to the ATR standard of the same material automatically. A new specimen is created from that material's line in `materials.csv`.
+
+## Workflow 2: A material that is not in the database yet
 
 Example: a new pigment, realgar.
 
-1. Open `materials.csv` and add one row. Columns:
+1. **Add one line to `materials.csv`** (see **How to edit the two sheets**). The columns are:
 
-   | Column | What to type |
-   |---|---|
-   | `file_key` | The word used at the start of filenames, lower case, no spaces: `realgar` |
-   | `material_name` | The name shown in the database: `Realgar` |
-   | `formula` | Plain text, numbers inline: `As4S4` |
-   | `is_synthetic` | `1` if synthetic, `0` if natural |
-   | `description` | A short description, or leave empty |
-   | `source` | Who supplied it: `UniPD mineral collection`, `Kremer`, `Maimeri` or a new name. Empty means no source is recorded |
-   | `specimen_type` | One of `powder pigment`, `ground mineral`, `mineral fragment` |
-   | `preparation_notes` | For example `Ground/prepared for FTIR analysis`, or empty |
-   | `source_notes` | Product number, label text, or empty |
+   | Column | What to type | Example |
+   |---|---|---|
+   | `file_key` | The word the filenames start with: lower case, no spaces | `realgar` |
+   | `material_name` | The name shown in the database | `Realgar` |
+   | `formula` | Plain text, numbers written inline | `As4S4` |
+   | `is_synthetic` | `1` if synthetic, `0` if natural | `0` |
+   | `description` | A short description, or leave empty | `Arsenic sulfide` |
+   | `source` | Who supplied it: `UniPD mineral collection`, `Kremer`, `Maimeri`, or a new name. Empty = not recorded | `UniPD mineral collection` |
+   | `specimen_type` | Exactly one of: `powder pigment`, `ground mineral`, `mineral fragment` | `ground mineral` |
+   | `preparation_notes` | For example `Ground/prepared for FTIR analysis`, or empty | `Ground/prepared for FTIR analysis` |
+   | `source_notes` | Product number or label text, or empty | |
 
-2. Name the scans with the new key: `realgar1.0.dpt`, `RealgarPowder.0.dpt`.
-3. Run the command.
+   The whole line for realgar:
+   ```
+   realgar,Realgar,As4S4,0,Arsenic sulfide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+   ```
+2. **Follow Workflow 1 from step 1.** Name the scans with the new key: `realgar1.0.dpt` for ER-IR, `RealgarPowder.0.dpt` for the ATR standard.
 
-If a scan's material has no row in `materials.csv`, the file is listed in the report under "name matched no rule" and is **not** loaded. Nothing is guessed. Adding the row and running again loads it.
+If a scan's material has no line in `materials.csv`, the file is **not loaded**. It appears in the report under "Files whose name matched no rule". Nothing is guessed. Add the line and run the command again.
 
-For a synthetic pigment, the ER-IR and ATR scans share one specimen (one jar of powder), so use the synthetic naming pattern.
+For a **synthetic pigment**, the ER-IR and ATR scans share one specimen (one jar of powder), so use the synthetic filenames from Part 2.
 
-## Case 3: an ATR standard added later
+## Workflow 3: An ATR standard collected later
 
 Example: Magnetite has no ATR standard, so its ER-IR scans are unlinked and tagged `needs-atr-recollection`.
 
-1. Collect the ATR spectrum, export it as absorbance, and name it `MagnetitePowder.0.dpt`.
-2. Put it in a new dated folder (see Case 1), add its line to `scan_dates.csv`, and run the command.
+1. Collect the ATR spectrum and export it from OPUS as absorbance.
+2. Name it `MagnetitePowder.0.dpt`.
+3. Follow Workflow 1 from step 3 (new dated folder, line in `scan_dates.csv`, dry run, run, commit).
 
-The script loads the standard, links every earlier Magnetite ER-IR scan to it, and removes the tag. The report says how many scans were linked.
+The program loads the standard, links **every earlier Magnetite ER-IR scan** to it, and removes the tag. The report says how many scans were linked.
 
 If a material already has an ATR standard, a second one is loaded but the existing links are kept.
 
-## Case 4: a scan was wrong and has been re-exported
+## Workflow 4: A scan was wrong and has been re-exported
 
-The script skips any file whose path is already in the database, so a corrected file with the same name is not picked up. First remove the old rows by hand in DB Browser for SQLite (Execute SQL), using the file path:
+The program skips any file whose path is already in the database, so a corrected file with the same name is not picked up. First remove the old rows by hand.
 
-```sql
-DELETE FROM SpectralFile WHERE FilePath = 'Oxides/hematite2.3.dpt';
-DELETE FROM Measurement
-WHERE MeasurementID NOT IN (SELECT MeasurementID FROM SpectralFile);
-```
+1. Open `pigment_spectral_standards.db` in DB Browser for SQLite.
+2. Click the **Execute SQL** tab.
+3. Delete everything in the box and paste the two lines below, changing only the file path in the first line to the scan you are replacing:
+   ```sql
+   DELETE FROM SpectralFile WHERE FilePath = 'Oxides/hematite2.3.dpt';
+   DELETE FROM Measurement WHERE MeasurementID NOT IN (SELECT MeasurementID FROM SpectralFile);
+   ```
+4. Click the **play button** (the triangle) above the box. You should see `Execution finished without errors`.
+5. Click **Write Changes** (top bar) or press Ctrl+S (Command+S on Mac). **This step is easy to forget, and without it nothing is saved.**
+6. **Close DB Browser.**
+7. Replace the file in the `scans` folder with the corrected one, keeping the same name.
+8. Run the program (dry run first, then for real), then commit and push in GitHub Desktop.
 
-Then put the corrected file in `scans/` and run the command. Do not delete an ATR standard this way while ER-IR scans point to it.
+Do not delete an ATR standard this way while ER-IR scans point to it.
 
-## Case 5: scans that are not standards (real objects, unknown specimens)
+## Workflow 5: Scans that are not standards (real objects, unknown specimens)
 
-Not covered yet. The script handles standards, where the material is always known. A scan from a real object needs a specimen with no material, an Object, a Collection and spot descriptions, and its identification is written later by the matching software. When you have such scans, this part of the script needs to be extended.
+**Not covered yet.** The program handles standards, where the material is always known. A scan from a real object needs a specimen with no material, an Object, a Collection and spot descriptions, and its identification is written later by the matching software. When you have such scans, the program needs a new mode. Ask Claude.
+
+---
+
+# Part 4: Reference
+
+## How to edit the two sheets (`materials.csv` and `scan_dates.csv`)
+
+These are plain text tables. Each line is one row, and commas separate the columns. **Do not change the first line (the column names).**
+
+**The safest way is a plain text editor**: Notepad on Windows, or TextEdit on Mac (choose **Format, then Make Plain Text** first). Open the file, add your line at the bottom, press Enter at the end so the file ends with a new line, and save.
+
+If you prefer Excel, Numbers or Google Sheets, be careful:
+- **Dates:** they change dates such as `2026-11-05` into `11/5/2026`, which breaks the program. Format the date columns as **Text** before typing, or use a text editor.
+- **Saving:** save as **CSV (UTF-8)**, never as `.xlsx`.
+
+Rules for both sheets:
+- No empty lines in the middle.
+- A value that contains a comma must be inside double quotes, for example `"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2"`.
+- Dates are always year-month-day with dashes: `2026-11-05`.
+- In `scan_dates.csv`, the first column is a folder name **ending with a slash**. The longest matching folder wins, so a line for `Carbonates/powder_dolomite/` overrides the line for `Carbonates/`.
 
 ## Reading the report
 
-| Section | Meaning |
-|---|---|
-| Added in this run | What was loaded, by material and mode |
-| Skipped: empty or unreadable | Files that are empty or not plain text. Re-export them |
-| Scans added without a date | Scans whose folder has no line in `scan_dates.csv`. Add one and enter the date, or type it into the database |
-| Removed as duplicates | A file with exactly the same intensity values as another one, in the same material and mode. The lowest scan number is kept. Duplicates are not loaded, but the files stay in `scans/` until you delete them |
-| Files whose name matched no rule | Not loaded. Fix the name, or add the material to `materials.csv` |
-| Filename typos corrected | Known misspellings that were read as the right name |
-| Things to check | Materials still missing an ATR standard |
+The report is printed in the Terminal and saved as `import_report.md` in the repository folder. You can open that file in any text editor or in GitHub.
 
-## What the script never does
+| Section | What it means | What to do |
+|---|---|---|
+| Added in this run | What was loaded, by material and mode | Check that it matches what you expected |
+| Scans added without a date | Scans whose folder has no line in `scan_dates.csv` | Add a line to `scan_dates.csv`, or type the date into the database |
+| Skipped: empty or unreadable | Files that are empty or not plain text | Re-export them from OPUS |
+| Removed as duplicates | A file with exactly the same intensity values as another file in the same material and mode. The lowest scan number is kept | Nothing. The files stay in `scans/` until you delete them |
+| Files whose name matched no rule | Not loaded | Fix the filename, or add the material to `materials.csv` |
+| Filename typos corrected | Known misspellings read as the right name | Nothing |
+| Things to check | Materials still missing an ATR standard | Nothing, or collect the standard (Workflow 3) |
+
+## If something goes wrong: undoing a run
+
+The database is saved in GitHub, so any run can be undone.
+
+**Before you have committed** (the run just finished and you do not like the result):
+1. Open GitHub Desktop. The **Changes** list shows every file the run changed.
+2. Right-click `pigment_spectral_standards.db` and choose **Discard changes**. Do the same for `import_report.md`.
+3. The database is back to how it was. The scan files you added stay in `scans/`.
+
+**After you have committed and pushed:**
+1. In GitHub Desktop, click the **History** tab.
+2. Right-click your commit and choose **Revert changes in commit**, then click **Push origin**.
+
+A run is also all or nothing: if the program stops with an error, nothing is saved.
+
+## What the program never does
 
 - It never changes or deletes a scan file.
 - It never converts a spectrum. It loads the numbers in the file, so the file must already be absorbance.
