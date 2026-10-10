@@ -160,7 +160,7 @@ CREATE TABLE Measurement (
     ConditionID INT,
     MeasurementSiteTypeID INT,
     ReferenceMeasurementID INT,           -- links an ER-IR scan to its ATR standard
-    `DateTime` VARCHAR(64),
+    ScanDate DATE,                        -- date of the scan, entered by hand
     ObjectSpotDescription TEXT,           -- where on a real object the spot is
     SpecimenSpotDescription TEXT,         -- where on the specimen the spot is
     PointX_cm DOUBLE,                     -- cm from Object.CoordinateReference

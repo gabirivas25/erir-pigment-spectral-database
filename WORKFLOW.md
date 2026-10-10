@@ -29,7 +29,7 @@ Two safety nets: a run is all or nothing (if anything fails, nothing is saved), 
 | Material name, formula, synthetic or not, description | `materials.csv` |
 | Source, specimen type, specimen notes | `materials.csv` |
 | Instrument (Bruker LUMOS II), operator, scan settings, site (Laboratory), intensity mode (Absorbance) | Fixed in the script |
-| Date of scan, environment, notes, coordinates, images | Not filled in. Enter by hand if wanted |
+| Scan date (`ScanDate`, as YYYY-MM-DD), environment, notes, coordinates, images | Not filled in. Enter by hand if wanted |
 
 ## Naming rules
 
