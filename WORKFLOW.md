@@ -94,6 +94,14 @@ python3 import_scans.py scans pigment_spectral_standards.db --dry-run
 
 If you see that, setup is finished. If you see an error, copy the whole message and send it to Claude.
 
+## Notes for Windows users
+
+- Type `python` instead of `python3`. If Windows says `python` is not recognized, type `py`.
+- To open a Terminal in the folder, use the File Explorer address bar trick in Step 3 (type `cmd` and press Enter).
+- Open the `.csv` files in **Notepad**, not Excel.
+- Folder and file names work the same as on a Mac. Use the same names and the same `/` in `scan_batches.csv` (for example `2026-11-05/`), not `\`.
+- The program has not yet been run on a Windows computer. If it shows an error, copy the whole message and send it to Claude.
+
 ## Quick reference
 
 You will use only these two commands from now on (Windows: `python` instead of `python3`):
@@ -121,6 +129,12 @@ New scans go in a **new folder named with the date**, for example `scans/2026-11
 ---
 
 # Part 3: Step-by-step workflows
+
+> **Always open the `.csv` files (`materials.csv`, `scan_batches.csv`, `operators.csv`) in a plain-text editor, not in Excel.**
+> - **Windows:** right-click the file, **Open with**, **Notepad**.
+> - **Mac:** right-click the file, **Open With**, **TextEdit**, then **Format, Make Plain Text**.
+>
+> Excel changes dates such as `2026-11-05` into `11/5/2026`, which breaks the program. If you do use Excel, save as **CSV UTF-8**, and format the date column as Text first. Details: **How to edit the sheets** in Part 4.
 
 Before each workflow, do these three things:
 
