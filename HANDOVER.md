@@ -72,7 +72,7 @@ A new operator should use the same setup. If the instrument or the settings ever
 | `HANDOVER.md` | This page | When ownership or people change |
 | `pigment_spectral_standards_sqlite_schema.sql` | Creates an empty SQLite database | When the design changes |
 | `pigment_spectral_standards_mysql_schema.sql` | The same design for MySQL 8. Only checked for syntax, **not yet run on a real server** | When the design changes |
-| `ER_Diagram.png` | Diagram of the 18 tables | When the design changes |
+| `ER_Diagram.png` | Diagram of the 17 tables | When the design changes |
 | `Archived/` | The earlier schema, its data and analysis scripts | Not edited |
 
 ## 7. Checklist before the author leaves

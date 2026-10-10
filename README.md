@@ -9,7 +9,7 @@ Thesis advisors: Professor Alfonso Zoleo (Chemistry) and Professor Nicola Orio (
 
 A reference database of external reflectance infrared (ER-IR) scans, each paired with the attenuated total reflectance (ATR) standard of the same material. The ER-IR scans are the kind of spectrum that can be taken non-invasively on a real object; the ATR standards are the reference they are compared with. Spectra were measured on a Bruker LUMOS II FT-IR microscope.
 
-**Status:** schema version 4 (18 tables), loaded from the re-exported absorbance scans. The database holds 256 measurements (242 ER-IR and 14 ATR) of 15 materials on 37 specimens. 220 of the ER-IR scans are linked to the ATR standard of the same material. Magnetite has no ATR standard yet and is tagged `needs-atr-recollection`. Files from the earlier version of the project are in [`Archived/`](Archived/).
+**Status:** schema version 4 (17 tables), loaded from the re-exported absorbance scans. The database holds 256 measurements (242 ER-IR and 14 ATR) of 15 materials on 37 specimens. 220 of the ER-IR scans are linked to the ATR standard of the same material. Magnetite has no ATR standard yet and is tagged `needs-atr-recollection`. Files from the earlier version of the project are in [`Archived/`](Archived/).
 
 ## Files
 
@@ -28,7 +28,7 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 | `import_report.md` | What the import loaded, corrected and skipped |
 | `pigment_spectral_standards_sqlite_schema.sql` | Creates an empty database in SQLite |
 | `pigment_spectral_standards_mysql_schema.sql` | The same design for MySQL 8 (schema only) |
-| `ER_Diagram.png` | Entity-relationship diagram of the 18 tables |
+| `ER_Diagram.png` | Entity-relationship diagram of the 17 tables |
 | `Archived/` | The earlier schema, its data and the analysis scripts that used it |
 
 ## How to open it, for non-technical readers
@@ -69,7 +69,7 @@ Each measurement holds its whole spectrum in one column, `Measurement.SpectrumDa
 
 The database holds absorbance data only. Spectra are converted to absorbance in OPUS before upload, and `IntensityMode` is filled in as `Absorbance`. The original `.dpt` file for each measurement is recorded in `SpectralFile`, with its size and a checksum.
 
-## Schema overview (18 tables)
+## Schema overview (17 tables)
 
 **Core data**
 
@@ -89,7 +89,6 @@ The database holds absorbance data only. Spectra are converted to absorbance in 
 | `Object`, `Collection`, `Institution` | For real heritage objects: where they came from, where they are now, and who holds them |
 | `Operator` | Who made the measurement |
 | `Instrument`, `InstrumentConfiguration` | The instrument and its settings |
-| `EnvironmentConditions` | Optional temperature, humidity, pressure and illumination |
 
 **Data-quality tags**
 

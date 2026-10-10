@@ -2,8 +2,8 @@
 -- Pigment Spectral Standards Database: SCHEMA v4 (MySQL 8)
 -- Prepared by Maria Gabriela Rivas Carmona, University of Padova
 -- ============================================================
--- Same design as Revised_Schema_v4.sql (SQLite): 18 tables
--- (15 data tables + 3 pick lists).
+-- Same design as Revised_Schema_v4.sql (SQLite): 17 tables
+-- (14 data tables + 3 pick lists).
 --
 -- Differences from the SQLite file, forced by MySQL:
 --   * AUTO_INCREMENT and ENGINE=InnoDB instead of AUTOINCREMENT.
@@ -137,14 +137,6 @@ CREATE TABLE InstrumentConfiguration (
     Notes TEXT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE EnvironmentConditions (
-    ConditionID INT AUTO_INCREMENT PRIMARY KEY,
-    Temperature DOUBLE,
-    Humidity DOUBLE,
-    Pressure DOUBLE,
-    IlluminationType VARCHAR(255)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 
 -- ---------- The measurement and its spectrum ----------
 
@@ -157,7 +149,6 @@ CREATE TABLE Measurement (
     IntensityMode VARCHAR(50) NOT NULL DEFAULT 'Absorbance',
     SpectrumData JSON NOT NULL,           -- array of [wavenumber, intensity] pairs
     OperatorID INT,
-    ConditionID INT,
     MeasurementSiteTypeID INT,
     ReferenceMeasurementID INT,           -- links an ER-IR scan to its ATR standard
     ScanDate DATE,                        -- date of the scan, entered by hand
@@ -172,7 +163,6 @@ CREATE TABLE Measurement (
     FOREIGN KEY (InstrumentConfigurationID) REFERENCES InstrumentConfiguration(InstrumentConfigurationID),
     FOREIGN KEY (AcquisitionModeID) REFERENCES AcquisitionModeType(AcquisitionModeID),
     FOREIGN KEY (OperatorID) REFERENCES Operator(OperatorID),
-    FOREIGN KEY (ConditionID) REFERENCES EnvironmentConditions(ConditionID),
     FOREIGN KEY (MeasurementSiteTypeID) REFERENCES MeasurementSiteType(MeasurementSiteTypeID),
     FOREIGN KEY (ReferenceMeasurementID) REFERENCES Measurement(MeasurementID)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -28,7 +28,7 @@ The program needs four things, all in this repository:
 | Scan date (`ScanDate`) | `scan_batches.csv`, by the folder the scan is in |
 | Operator | `scan_batches.csv`, by the folder the scan is in. The person must be in `operators.csv` |
 | Instrument (Bruker LUMOS II), scan settings (ER-IR: 4 cm-1, 64 scans, ZnSe, 30 um aperture; ATR: 4 cm-1, 32 scans, ZnSe), site (Laboratory), intensity mode (Absorbance) | Fixed in the program: the standard setup, the same for every operator |
-| Environment, notes, coordinates, images | Not filled in. Type them into the database by hand if you want them |
+| Notes, coordinates, images | Not filled in. Type them into the database by hand if you want them |
 
 ---
 

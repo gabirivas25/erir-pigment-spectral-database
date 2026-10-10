@@ -2,7 +2,7 @@
 -- Pigment Spectral Standards Database: SCHEMA v4 (SQLite)
 -- Prepared by Maria Gabriela Rivas Carmona, University of Padova
 -- ============================================================
--- Table count: 18 (15 data tables + 3 pick lists)
+-- Table count: 17 (14 data tables + 3 pick lists)
 --
 -- CHANGES FROM v3 (after feedback from Prof. Orio):
 --   MERGED    Spectrum and SpectralDataPoint into Measurement. A measurement
@@ -19,6 +19,7 @@
 --   REMOVED   Spectrum, SpectralDataPoint, PostProcessing,
 --             MeasurementLocation, MineralClass.
 --   REMOVED   Institution.Location, Collection.Location.
+--   REMOVED   EnvironmentConditions and Measurement.ConditionID (never used).
 --   CHANGED   SpectralFile: now one required .dpt file per measurement;
 --             FileSize and Checksum added. FileRole is removed.
 --
@@ -147,14 +148,6 @@ CREATE TABLE InstrumentConfiguration (
     Notes TEXT
 );
 
-CREATE TABLE EnvironmentConditions (
-    ConditionID INTEGER PRIMARY KEY AUTOINCREMENT,
-    Temperature REAL,
-    Humidity REAL,
-    Pressure REAL,
-    IlluminationType TEXT
-);
-
 
 -- ---------- The measurement and its spectrum ----------
 
@@ -168,7 +161,6 @@ CREATE TABLE Measurement (
     SpectrumData TEXT NOT NULL            -- JSON array of [wavenumber, intensity] pairs
         CHECK (json_valid(SpectrumData)),
     OperatorID INTEGER,
-    ConditionID INTEGER,
     MeasurementSiteTypeID INTEGER,
     ReferenceMeasurementID INTEGER,       -- links an ER-IR scan to its ATR standard
     ScanDate TEXT,                        -- date of the scan, YYYY-MM-DD, entered by hand
@@ -183,7 +175,6 @@ CREATE TABLE Measurement (
     FOREIGN KEY (InstrumentConfigurationID) REFERENCES InstrumentConfiguration(InstrumentConfigurationID),
     FOREIGN KEY (AcquisitionModeID) REFERENCES AcquisitionModeType(AcquisitionModeID),
     FOREIGN KEY (OperatorID) REFERENCES Operator(OperatorID),
-    FOREIGN KEY (ConditionID) REFERENCES EnvironmentConditions(ConditionID),
     FOREIGN KEY (MeasurementSiteTypeID) REFERENCES MeasurementSiteType(MeasurementSiteTypeID),
     FOREIGN KEY (ReferenceMeasurementID) REFERENCES Measurement(MeasurementID)
 );
