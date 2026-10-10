@@ -1,6 +1,6 @@
 # Naming guide: scans and folders
 
-The import program finds out everything about a scan **from its filename**: which material it is, which specimen, and whether it is an ER-IR scan or an ATR scan. It finds the **date** from the folder the scan is in. So names matter, and this guide is the single place where the rules are written down.
+The import program finds out everything about a scan **from its filename**: which material it is, which specimen, and whether it is an ER-IR scan or an ATR scan. It finds the **date and the operator** from the folder the scan is in. So names matter, and this guide is the single place where the rules are written down.
 
 **A file with a name that does not follow these rules is not loaded.** The report lists it under "Files whose name matched no rule". Nothing is lost and nothing is guessed. Rename the file and run the program again.
 
@@ -69,7 +69,7 @@ Rename the file in Finder or File Explorer (right-click the file, then **Rename*
 
 ## 2. How to name your folders
 
-The scan files live in the `scans` folder. The folder a scan is in tells the program **the date of the scan**. The folder name does not decide the material: that comes from the filename.
+The scan files live in the `scans` folder. The folder a scan is in tells the program **the date of the scan and who made it**. The folder name does not decide the material: that comes from the filename.
 
 ### The rules
 
@@ -78,13 +78,13 @@ The scan files live in the `scans` folder. The folder a scan is in tells the pro
    ```
    scans/2026-11-05/
    ```
-3. **One folder per scan date.** If you scan on two different days, make two folders. If you did two separate sessions on the same day, use `2026-11-05` for the first and `2026-11-05_b` for the second, each with its own line in `scan_dates.csv`.
+3. **One folder per scan date.** If you scan on two different days, make two folders. If you did two separate sessions on the same day, use `2026-11-05` for the first and `2026-11-05_b` for the second, each with its own line in `scan_batches.csv`.
 4. **Never put new scans in the older folders** (`carbonates`, `oxides`, and so on). They already carry their own older date, so a new scan would get the wrong date.
-5. **Every new folder needs one line in `scan_dates.csv`**: the folder name **followed by a slash**, a comma and the date.
+5. **Every new folder needs one line in `scan_batches.csv`**: the folder name **followed by a slash**, a comma, the date, a comma and the operator's name.
    ```
-   2026-11-05/,2026-11-05
+   2026-11-05/,2026-11-05,Maria Gabriela Rivas Carmona
    ```
-   If you forget it, the scan is still loaded, its date stays empty and the report lists it under "Scans added without a date".
+   The operator must already be in `operators.csv`, spelled the same way (see `WORKFLOW.md`, Workflow 5). If you forget the line, the scan is still loaded, its date and operator stay empty and the report lists it under "Scans added without a date" and "Scans added without an operator".
 
 ### The folders that exist now
 
@@ -102,7 +102,7 @@ scans/
     └── verdigris/              verdigris
 ```
 
-These are the folders from the first scan session. Their dates are in `scan_dates.csv`: 2026-04-23 for the mineral folders, 2026-10-10 for `synthetics`, and 2026-10-09 for `carbonates/powder_dolomite`.
+These are the folders from the first scan session. Their dates and operator are in `scan_batches.csv`: 2026-04-23 for the mineral folders, 2026-10-10 for `synthetics`, and 2026-10-09 for `carbonates/powder_dolomite`.
 
 Subfolders inside a dated folder are allowed (for example `scans/2026-11-05/realgar/`). The date still comes from the first part of the path.
 
@@ -134,5 +134,5 @@ The full step-by-step for adding a new material is in [`WORKFLOW.md`](WORKFLOW.m
 - [ ] No spaces, no old-style names such as `hematite2.16.dpt`.
 - [ ] I did not reuse a scan number.
 - [ ] The new scans are in a **new folder named with the date** (`scans/2026-11-05/`).
-- [ ] That folder has a line in `scan_dates.csv`.
+- [ ] That folder has a line in `scan_batches.csv` with the date and the operator, and the operator is in `operators.csv`.
 - [ ] A new material has a line in `materials.csv`, and its `file_key` matches the start of the filenames.

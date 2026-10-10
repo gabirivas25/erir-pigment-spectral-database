@@ -4,7 +4,8 @@ import_scans.py: load .dpt scans into the pigment spectral standards database.
 
 USAGE
     python3 import_scans.py SCANS_FOLDER DATABASE.db [--schema SCHEMA.sql]
-                            [--materials materials.csv] [--dates scan_dates.csv]
+                            [--materials materials.csv] [--batches scan_batches.csv]
+                            [--operators operators.csv]
                             [--report REPORT.md] [--dry-run]
 
     SCANS_FOLDER  the folder holding the .dpt scans (subfolders are searched)
@@ -12,7 +13,8 @@ USAGE
                   If it exists, the new scans are ADDED to it and nothing already in it is changed.
     --schema      the SQLite schema file (only needed when creating a new database)
     --materials   the materials sheet (default: materials.csv next to this script)
-    --dates       the scan-date sheet (default: scan_dates.csv next to this script)
+    --batches     the batch sheet: date and operator of each scan folder (default: scan_batches.csv)
+    --operators   the list of operators (default: operators.csv next to this script)
     --report      where to write the report (default: import_report.md next to the database)
     --dry-run     do everything and print the report, but save nothing
 
@@ -24,7 +26,8 @@ WHAT IT DOES
     4. Adds, for each new scan: the measurement, its spectrum, its file record (path, size,
        checksum) and its link to the ATR standard of the same material.
     5. Creates materials, sources and specimens as they are needed, from materials.csv.
-       Each new scan gets its ScanDate from scan_dates.csv (longest matching folder prefix).
+       Each new scan gets its ScanDate and its operator from scan_batches.csv (longest matching
+       folder prefix); operators are described in operators.csv and added to the database on first use.
     6. Keeps the `needs-atr-recollection` tag up to date and writes a report.
 
 It never modifies the scans. Nothing is converted: spectra are loaded as they are in the file.
@@ -50,7 +53,7 @@ import sys
 # Fixed facts. Materials, formulas, sources and specimen types live in materials.csv.
 # ---------------------------------------------------------------------------
 
-OPERATOR = ("Maria Gabriela Rivas Carmona", "gabrielarivas25@gmail.com", "University of Padova")
+# The instrument and the scan settings are the standard setup and are the same for every operator.
 INSTRUMENT = ("FTIR microscope", "LUMOS II", "Bruker")
 # (Resolution, AngleOfIncidence, NumberOfScans, BeamSplitterType, ApertureSize, Notes)
 CONFIG = {
@@ -89,27 +92,53 @@ def load_materials(path):
     return rows
 
 
-def load_dates(path):
-    """Return a list of (prefix, date), longest prefix first. A missing sheet means no dates."""
+def load_operators(path):
+    """Return {name: (email, institution)} from operators.csv (empty if the sheet is missing)."""
+    ops = {}
+    if not os.path.exists(path):
+        return ops
+    with open(path, newline="", encoding="utf-8") as fh:
+        rd = csv.DictReader(fh)
+        missing = [c for c in ("name", "email", "institution") if c not in (rd.fieldnames or [])]
+        if missing:
+            sys.exit("operators.csv is missing these columns in its first line: " + ", ".join(missing))
+        for r in rd:
+            name = (r["name"] or "").strip()
+            if name:
+                ops[name] = ((r["email"] or "").strip() or None, (r["institution"] or "").strip() or None)
+    return ops
+
+
+def load_batches(path, operators):
+    """Return a list of (prefix, date, operator_name), longest prefix first."""
     if not os.path.exists(path):
         return []
     rows = []
     with open(path, newline="", encoding="utf-8") as fh:
-        for r in csv.DictReader(fh):
+        rd = csv.DictReader(fh)
+        missing = [c for c in ("path_prefix", "date", "operator") if c not in (rd.fieldnames or [])]
+        if missing:
+            sys.exit("scan_batches.csv is missing these columns in its first line: " + ", ".join(missing))
+        for r in rd:
             prefix, date = (r["path_prefix"] or "").strip(), (r["date"] or "").strip()
+            op = (r["operator"] or "").strip() or None
             if not prefix:
                 continue
-            if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
-                sys.exit("scan_dates.csv: '%s' is not a date in the form YYYY-MM-DD (row '%s')" % (date, prefix))
-            rows.append((prefix, date))
+            if date and not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+                sys.exit("scan_batches.csv: '%s' is not a date in the form YYYY-MM-DD (row '%s')" % (date, prefix))
+            if op and op not in operators:
+                sys.exit("scan_batches.csv: the operator '%s' (row '%s') is not in operators.csv. "
+                         "Add the person there first, with the name spelled exactly the same." % (op, prefix))
+            rows.append((prefix, date or None, op))
     return sorted(rows, key=lambda x: -len(x[0]))
 
 
-def date_for(path, dates):
-    for prefix, date in dates:
+def batch_for(path, batches):
+    """Return (date, operator_name) of the longest folder prefix that matches, else (None, None)."""
+    for prefix, date, op in batches:
         if path.startswith(prefix):
-            return date
-    return None
+            return date, op
+    return None, None
 
 
 def read_dpt(path):
@@ -168,13 +197,15 @@ def main():
     ap.add_argument("database")
     ap.add_argument("--schema", default=os.path.join(here, "pigment_spectral_standards_sqlite_schema.sql"))
     ap.add_argument("--materials", default=os.path.join(here, "materials.csv"))
-    ap.add_argument("--dates", default=os.path.join(here, "scan_dates.csv"))
+    ap.add_argument("--batches", default=os.path.join(here, "scan_batches.csv"))
+    ap.add_argument("--operators", default=os.path.join(here, "operators.csv"))
     ap.add_argument("--report")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
     mats = load_materials(a.materials)
-    dates = load_dates(a.dates)
+    operators = load_operators(a.operators)
+    batches = load_batches(a.batches, operators)
     exists = os.path.exists(a.database)
     if not exists and not os.path.exists(a.schema):
         sys.exit("The database does not exist and the schema file was not found: " + a.schema)
@@ -222,9 +253,6 @@ def main():
             pick("SpecimenType", "TypeName", m["specimen_type"], "SpecimenTypeID")
 
     # fixed records (only when creating)
-    if one("SELECT COUNT(*) FROM Operator") == 0:
-        cur.execute("INSERT INTO Institution(InstitutionName) VALUES (?)", (OPERATOR[2],))
-        cur.execute("INSERT INTO Operator(Name,Email,InstitutionID) VALUES (?,?,?)", OPERATOR[:2] + (cur.lastrowid,))
     if one("SELECT COUNT(*) FROM Instrument") == 0:
         cur.execute("INSERT INTO Instrument(InstrumentName,Model,Manufacturer) VALUES (?,?,?)", INSTRUMENT)
     cfg_id = {}
@@ -237,7 +265,26 @@ def main():
                         "BeamSplitterType,ApertureSize,Notes) VALUES (?,?,?,?,?,?)", vals)
             found = cur.lastrowid
         cfg_id[mode] = found
-    operator_id = one("SELECT MIN(OperatorID) FROM Operator")
+    op_cache = {}
+
+    def operator(name):
+        if name is None:
+            return None
+        if name not in op_cache:
+            oid = one("SELECT OperatorID FROM Operator WHERE Name=?", (name,))
+            if oid is None:
+                email, inst = operators[name]
+                iid = None
+                if inst:
+                    iid = one("SELECT InstitutionID FROM Institution WHERE InstitutionName=?", (inst,))
+                    if iid is None:
+                        cur.execute("INSERT INTO Institution(InstitutionName) VALUES (?)", (inst,))
+                        iid = cur.lastrowid
+                cur.execute("INSERT INTO Operator(Name,Email,InstitutionID) VALUES (?,?,?)", (name, email, iid))
+                oid = cur.lastrowid
+            op_cache[name] = oid
+        return op_cache[name]
+
     instrument_id = one("SELECT MIN(InstrumentID) FROM Instrument")
     site = pick("MeasurementSiteType", "TypeName", "Laboratory", "MeasurementSiteTypeID")
     mode_id = {m: pick("AcquisitionModeType", "ModeName", m, "AcquisitionModeID") for m in ("ER-IR", "ATR")}
@@ -310,20 +357,22 @@ def main():
         return spec_id[k]
 
     added = collections.Counter()
-    undated = []
+    undated, no_operator = [], []
     for r in [x for x in records if x["mode"] == "ATR"] + [x for x in records if x["mode"] == "ER-IR"]:
         mode, key = r["mode"], r["material"]
         sid = specimen(key, r["specimen"])
         ref = atr_meas.get(key) if mode == "ER-IR" else None
         spectrum = json.dumps([[x, y] for x, y in r["pts"]], separators=(",", ":"))
+        bdate, bop = batch_for(r["path"], batches)
         cur.execute(
             "INSERT INTO Measurement(SpecimenID,InstrumentID,InstrumentConfigurationID,AcquisitionModeID,"
             "SpectrumData,OperatorID,MeasurementSiteTypeID,ReferenceMeasurementID,SpecimenSpotDescription,ScanDate) "
             "VALUES (?,?,?,?,?,?,?,?,?,?)",
-            (sid, instrument_id, cfg_id[mode], mode_id[mode], spectrum, operator_id, site, ref, r["spot"],
-             date_for(r["path"], dates)))
-        if date_for(r["path"], dates) is None:
+            (sid, instrument_id, cfg_id[mode], mode_id[mode], spectrum, operator(bop), site, ref, r["spot"], bdate))
+        if bdate is None:
             undated.append(r["path"])
+        if bop is None:
+            no_operator.append(r["path"])
         mid = cur.lastrowid
         if mode == "ATR":
             atr_meas.setdefault(key, mid)
@@ -381,7 +430,12 @@ def main():
     L.append("\n## Scans added without a date (%d)\n" % len(undated))
     L += ["- `%s`" % x for x in sorted(undated)] or ["(none)"]
     if undated:
-        L.append("\nAdd a line for them to scan_dates.csv, or type the date into the database (ScanDate).")
+        L.append("\nAdd a line for them to scan_batches.csv, or type the date into the database (ScanDate).")
+    L.append("\n## Scans added without an operator (%d)\n" % len(no_operator))
+    L += ["- `%s`" % x for x in sorted(no_operator)] or ["(none)"]
+    if no_operator:
+        L.append("\nAdd the operator to the folder's line in scan_batches.csv (the person must be listed in operators.csv), "
+                 "or type the operator into the database.")
     L.append("\n## Database totals per material\n")
     L.append("| Material | ER-IR | ATR | Specimens |\n|---|---|---|---|")
     L += ["| %s | %d | %d | %d |" % r for r in per_mat]

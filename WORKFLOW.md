@@ -6,13 +6,14 @@ This guide is written for someone who has never used a terminal. Every step says
 
 You put new scan files (`.dpt`) in the `scans/` folder and run **one command**. A small program, `import_scans.py`, reads the files and **adds** them to the database. It never rebuilds the database and never changes what is already in it.
 
-The program needs three things, all in this repository:
+The program needs four things, all in this repository:
 
 | File | What it holds |
 |---|---|
 | `scans/` | The scan files themselves |
 | `materials.csv` | One line per material: name, formula, source, specimen type |
-| `scan_dates.csv` | The date of each group of scans |
+| `scan_batches.csv` | The date and the operator (the person who scanned) of each group of scans |
+| `operators.csv` | The people who do scans: name, email, institution |
 
 ## What the program fills in, and what it does not
 
@@ -24,8 +25,9 @@ The program needs three things, all in this repository:
 | Link from an ER-IR scan to its ATR standard | Found automatically: same material |
 | Material name, formula, synthetic or not, description | `materials.csv` |
 | Source, specimen type, specimen notes | `materials.csv` |
-| Scan date (`ScanDate`) | `scan_dates.csv`, by the folder the scan is in |
-| Instrument (Bruker LUMOS II), operator, scan settings, site (Laboratory), intensity mode (Absorbance) | Fixed in the program |
+| Scan date (`ScanDate`) | `scan_batches.csv`, by the folder the scan is in |
+| Operator | `scan_batches.csv`, by the folder the scan is in. The person must be in `operators.csv` |
+| Instrument (Bruker LUMOS II), scan settings (ER-IR: 4 cm-1, 64 scans, ZnSe, 30 um aperture; ATR: 4 cm-1, 32 scans, ZnSe), site (Laboratory), intensity mode (Absorbance) | Fixed in the program: the standard setup, the same for every operator |
 | Environment, notes, coordinates, images | Not filled in. Type them into the database by hand if you want them |
 
 ---
@@ -114,7 +116,7 @@ The program reads each scan's **filename** to find the material, the specimen an
 | ER-IR scan of a powdered pigment | `synth_pigmentname_ER_IR_scannumber.dpt` (for example `synth_verdigris_ER_IR_3.dpt`) |
 | ATR scan of a powdered pigment | `synth_pigmentname_ATR.dpt` (for example `synth_verdigris_ATR.dpt`) |
 
-New scans go in a **new folder named with the date**, for example `scans/2026-11-05/`, with one line for it in `scan_dates.csv`.
+New scans go in a **new folder named with the date**, for example `scans/2026-11-05/`, with one line for it in `scan_batches.csv` (date and operator).
 
 ---
 
@@ -133,23 +135,23 @@ Example: three new calcite scans, measured on 5 November 2026.
 1. **Export the scans from OPUS as absorbance `.dpt` files.**
 2. **Name them** with the pattern in Part 2, for example `calcite_ER_IR_1_12.dpt`, `calcite_ER_IR_1_13.dpt`, `calcite_ER_IR_1_14.dpt` (the next scans of calcite specimen 1).
 3. **Make a new folder** inside the `scans` folder, named with the date of the scan: `scans/2026-11-05`. Put the new files inside it. Do **not** put new scans in the older folders (carbonates, oxides, silicates, sulfides, powder_atr, synthetics): those folders already carry an older date.
-4. **Tell the program the date.** Open `scan_dates.csv` (see **How to edit the two sheets** below) and add one line at the bottom:
+4. **Tell the program the date and who scanned.** Open `scan_batches.csv` (see **How to edit the sheets** below) and add one line at the bottom:
    ```
-   2026-11-05/,2026-11-05
+   2026-11-05/,2026-11-05,Maria Gabriela Rivas Carmona
    ```
-   The first part is the folder name, followed by a slash. The second part is the date, written year-month-day.
+   The first part is the folder name, followed by a slash. The second part is the date, written year-month-day. The third part is the operator, spelled **exactly** as in `operators.csv`.
 5. **Check first.** In the Terminal, type the dry-run command and press Enter:
    ```
    python3 import_scans.py scans pigment_spectral_standards.db --dry-run
    ```
-   Read the report (see **Reading the report**). You want to see your three scans under "Added in this run", and nothing under "Files whose name matched no rule" or "Scans added without a date".
+   Read the report (see **Reading the report**). You want to see your three scans under "Added in this run", and nothing under "Files whose name matched no rule" or "Scans added without a date" or "Scans added without an operator".
 6. **Run it for real**, the same command without `--dry-run`:
    ```
    python3 import_scans.py scans pigment_spectral_standards.db
    ```
    The third line of the report now says `Saved` and `3 scans added`.
 7. **Check in DB Browser** (optional but recommended): open `pigment_spectral_standards.db`, click the **Browse Data** tab, choose the table **Measurement** and look at the last rows. The new scans are at the bottom.
-8. **Save your work to GitHub.** Open GitHub Desktop. It lists the changed files (the new scans, `scan_dates.csv`, the database and `import_report.md`). Type a short description in the **Summary** box, for example `Add calcite scans from 5 November`, click **Commit to main**, then click **Push origin**.
+8. **Save your work to GitHub.** Open GitHub Desktop. It lists the changed files (the new scans, `scan_batches.csv`, the database and `import_report.md`). Type a short description in the **Summary** box, for example `Add calcite scans from 5 November`, click **Commit to main**, then click **Push origin**.
 
 Each new ER-IR scan is linked to the ATR standard of the same material automatically. A new specimen is created from that material's line in `materials.csv`.
 
@@ -197,14 +199,14 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
 2. Create a new folder named with the scan date: `2026-11-05`.
 3. Copy the three files into it.
 
-### Step 4: Tell the program the date
+### Step 4: Tell the program the date and the operator
 
-1. Open `scan_dates.csv` the same way as in step 1 (plain-text editor).
+1. Open `scan_batches.csv` the same way as in step 1 (plain-text editor).
 2. At the end of the last line press **Enter** and type:
    ```
-   2026-11-05/,2026-11-05
+   2026-11-05/,2026-11-05,Maria Gabriela Rivas Carmona
    ```
-   The first part is the folder name followed by a slash, the second part is the date (year-month-day). Save the file.
+   The first part is the folder name followed by a slash, the second part is the date (year-month-day), the third is the operator's name exactly as in `operators.csv`. Save the file.
 
 ### Step 5: Do a trial run
 
@@ -219,7 +221,7 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
    - Realgar, ATR: 1
    - Realgar, ER-IR: 2
    ```
-   Under **Files whose name matched no rule** and **Scans added without a date** you should see `(none)`.
+   Under **Files whose name matched no rule** and **Scans added without a date** and **Scans added without an operator** you should see `(none)`.
 4. If your scans are listed under "matched no rule", the filename does not start with the `file_key` you typed in `materials.csv`, or it does not follow the pattern in Part 2. Fix the name or the key, and do the trial run again.
 
 ### Step 6: Run it for real
@@ -239,7 +241,7 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
 
 ### Step 8: Save your work to GitHub
 
-1. Open GitHub Desktop. It lists the changed files: `materials.csv`, `scan_dates.csv`, the database, `import_report.md` and the three new scans.
+1. Open GitHub Desktop. It lists the changed files: `materials.csv`, `scan_batches.csv`, the database, `import_report.md` and the three new scans.
 2. Type a short description in the **Summary** box, for example `Add realgar`.
 3. Click **Commit to main**, then click **Push origin**.
 
@@ -253,7 +255,7 @@ Example: Magnetite has no ATR standard, so its ER-IR scans are unlinked and tagg
 
 1. Collect the ATR spectrum and export it from OPUS as absorbance.
 2. Name it `magnetite_ATR.dpt`.
-3. Follow Workflow 1 from step 3 (new dated folder, line in `scan_dates.csv`, dry run, run, commit).
+3. Follow Workflow 1 from step 3 (new dated folder, line in `scan_batches.csv`, dry run, run, commit).
 
 The program loads the standard, links **every earlier Magnetite ER-IR scan** to it, and removes the tag. The report says how many scans were linked.
 
@@ -278,7 +280,28 @@ The program skips any file whose path is already in the database, so a corrected
 
 Do not delete an ATR standard this way while ER-IR scans point to it.
 
-## Workflow 5: Scans that are not standards (real objects, unknown specimens)
+## Workflow 5: A new person is doing the scans
+
+Example: Jane Smith (Università di Padova) takes over the scanning from 12 January 2027. The scans are made with the same instrument and the same settings as before, so only the person changes.
+
+1. **Add the person to `operators.csv`.** Open it in a plain-text editor and add one line at the bottom: name, email, institution.
+   ```
+   Jane Smith,jane.smith@unipd.it,University of Padova
+   ```
+2. **Name the scans and put them in a new dated folder** as in Workflow 1 (`scans/2027-01-12/`).
+3. **Add the folder to `scan_batches.csv`** with her name, spelled exactly as in `operators.csv`:
+   ```
+   2027-01-12/,2027-01-12,Jane Smith
+   ```
+4. Dry run, run, commit and push as in Workflow 1.
+
+The program creates the operator in the database the first time it is used. Earlier scans keep their original operator. If the name in `scan_batches.csv` is not in `operators.csv`, the program stops with a message and saves nothing. If the operator column is left empty the scans are loaded without an operator and listed in the report.
+
+The instrument and the scan settings are not asked for: they are the standard setup. If the setup ever changes, the program has to be changed (ask Claude), because the old and new scans must not be recorded as identical.
+
+When the person who runs the database changes, see [`HANDOVER.md`](HANDOVER.md).
+
+## Workflow 6: Scans that are not standards (real objects, unknown specimens)
 
 **Not covered yet.** The program handles standards, where the material is always known. A scan from a real object needs a specimen with no material, an Object, a Collection and spot descriptions, and its identification is written later by the matching software. When you have such scans, the program needs a new mode. Ask Claude.
 
@@ -286,7 +309,7 @@ Do not delete an ATR standard this way while ER-IR scans point to it.
 
 # Part 4: Reference
 
-## How to edit the two sheets (`materials.csv` and `scan_dates.csv`)
+## How to edit the sheets (`materials.csv`, `scan_batches.csv` and `operators.csv`)
 
 These are plain text tables. Each line is one row, and commas separate the columns. **Do not change the first line (the column names).**
 
@@ -296,11 +319,13 @@ If you prefer Excel, Numbers or Google Sheets, be careful:
 - **Dates:** they change dates such as `2026-11-05` into `11/5/2026`, which breaks the program. Format the date columns as **Text** before typing, or use a text editor.
 - **Saving:** save as **CSV (UTF-8)**, never as `.xlsx`.
 
-Rules for both sheets:
+Rules for all sheets:
 - No empty lines in the middle.
 - A value that contains a comma must be inside double quotes, for example `"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2"`.
 - Dates are always year-month-day with dashes: `2026-11-05`.
-- In `scan_dates.csv`, the first column is a folder name **ending with a slash**. The longest matching folder wins, so a line for `carbonates/powder_dolomite/` overrides the line for `carbonates/`.
+- In `scan_batches.csv`, the columns are `path_prefix,date,operator`. The first column is a folder name **ending with a slash**. The longest matching folder wins, so a line for `carbonates/powder_dolomite/` overrides the line for `carbonates/`.
+- The operator name in `scan_batches.csv` must be spelled exactly as in `operators.csv`.
+- In `operators.csv`, the columns are `name,email,institution`.
 
 ## Reading the report
 
@@ -309,7 +334,8 @@ The report is printed in the Terminal and saved as `import_report.md` in the rep
 | Section | What it means | What to do |
 |---|---|---|
 | Added in this run | What was loaded, by material and mode | Check that it matches what you expected |
-| Scans added without a date | Scans whose folder has no line in `scan_dates.csv` | Add a line to `scan_dates.csv`, or type the date into the database |
+| Scans added without a date | Scans whose folder has no line in `scan_batches.csv` | Add a line to `scan_batches.csv`, or type the date into the database |
+| Scans added without an operator | Scans whose folder has no line, or an empty operator, in `scan_batches.csv` | Add the operator to the line, or type it into the database |
 | Skipped: empty or unreadable | Files that are empty or not plain text | Re-export them from OPUS |
 | Removed as duplicates | A file with exactly the same intensity values as another file in the same material and mode. The lowest scan number is kept | Nothing. The files stay in `scans/` until you delete them |
 | Files whose name matched no rule | Not loaded | Fix the filename, or add the material to `materials.csv` |
@@ -336,3 +362,4 @@ A run is also all or nothing: if the program stops with an error, nothing is sav
 - It never changes or deletes a scan file.
 - It never converts a spectrum. It loads the numbers in the file, so the file must already be absorbance.
 - It never changes a measurement that is already in the database.
+- It never records who the operator is by guessing: it only uses `scan_batches.csv`.

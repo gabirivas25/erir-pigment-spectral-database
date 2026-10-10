@@ -19,7 +19,9 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 | `scans/` | The 256 `.dpt` scan files the database was built from, named `mineral_ER_IR_specimen_scan.dpt` and `mineral_ATR.dpt` (see `NAMING.md`) |
 | `import_scans.py` | Adds new scans from `scans/` to the database and writes `import_report.md` |
 | `materials.csv` | The materials, their formulas, sources and specimen types, read by the script |
-| `scan_dates.csv` | The date of each group of scans, by folder, read by the script |
+| `scan_batches.csv` | The date and operator of each group of scans, by folder, read by the script |
+| `operators.csv` | The people who make scans: name, email, institution, read by the script |
+| `HANDOVER.md` | What to do when the person running the database leaves: ownership, operators, file list |
 | `scan_rename_map.csv` | Old and new filename of every scan, from the renaming to the current naming convention (also records the lazurite point numbers) |
 | `WORKFLOW.md` | Step-by-step instructions for adding scans and new materials |
 | `NAMING.md` | How to name scans, folders and materials |
