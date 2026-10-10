@@ -38,7 +38,7 @@ The script reads the filename. The key is the `file_key` column of `materials.cs
 | Kind of scan | Filename | Example |
 |---|---|---|
 | ER-IR, natural mineral | `<key><specimen>.<scan>.dpt` | `hematite2.16.dpt` is hematite, specimen 2, scan 16 |
-| ATR standard, natural mineral | `<Key>Powder.<n>.dpt` or `<Key>_ATR.dpt` | `AzuritePowder.0.dpt` |
+| ATR standard, natural mineral | `<Key>Powder.<n>.dpt`, `<Key>_ATR.dpt` or `powder_<key>_<n>.dpt` | `AzuritePowder.0.dpt`, `powder_dolomite_0.dpt` |
 | ER-IR, synthetic pigment | `<key>_ER_<n>.<m>.dpt` | `verdigris_ER_3.0.dpt` |
 | ATR, synthetic pigment | `<key>_ATR.dpt` | `verdigris_ATR.0.dpt` |
 
