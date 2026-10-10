@@ -53,7 +53,7 @@ Python is the free program that runs `import_scans.py`.
    - **Windows only:** on the first installer screen, tick the box **Add python.exe to PATH** before clicking Install.
 5. Close the Terminal, open it again and repeat step 2 to check.
 
-> **Windows users:** wherever this guide says `python3`, type `python` instead.
+> **Windows users:** wherever this guide says `python3`, type `python` instead. If Windows answers that `python` is not recognized, type `py` instead (and tick **Add python.exe to PATH** when you reinstall Python).
 
 ## Step 2: Get the repository onto your computer
 

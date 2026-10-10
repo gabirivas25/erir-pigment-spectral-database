@@ -72,7 +72,7 @@ def load_materials(path):
     rows = {}
     need = ["file_key", "material_name", "chemical_formula", "is_synthetic", "description", "source",
             "specimen_type", "preparation_notes", "source_notes"]
-    with open(path, newline="", encoding="utf-8") as fh:
+    with open(path, newline="", encoding="utf-8-sig") as fh:
         rd = csv.DictReader(fh)
         missing = [c for c in need if c not in (rd.fieldnames or [])]
         if missing:
@@ -97,7 +97,7 @@ def load_operators(path):
     ops = {}
     if not os.path.exists(path):
         return ops
-    with open(path, newline="", encoding="utf-8") as fh:
+    with open(path, newline="", encoding="utf-8-sig") as fh:
         rd = csv.DictReader(fh)
         missing = [c for c in ("name", "email", "institution") if c not in (rd.fieldnames or [])]
         if missing:
@@ -114,7 +114,7 @@ def load_batches(path, operators):
     if not os.path.exists(path):
         return []
     rows = []
-    with open(path, newline="", encoding="utf-8") as fh:
+    with open(path, newline="", encoding="utf-8-sig") as fh:
         rd = csv.DictReader(fh)
         missing = [c for c in ("path_prefix", "date", "operator") if c not in (rd.fieldnames or [])]
         if missing:
@@ -191,6 +191,12 @@ def classify(rel, mats):
 
 
 def main():
+    # Windows consoles often use a legacy encoding; make the report printable.
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(description="Add .dpt scans to the pigment spectral standards database.")
     ap.add_argument("scans")
