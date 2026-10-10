@@ -1,0 +1,16 @@
+file_key,material_name,formula,is_synthetic,description,source,specimen_type,preparation_notes,source_notes
+aragonite,Aragonite,CaCO3,0,Calcium carbonate polymorph,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+azurite,Azurite,Cu3(CO3)2(OH)2,0,Basic copper carbonate,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+calcite,Calcite,CaCO3,0,Calcium carbonate polymorph,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+cerussite,Cerussite,PbCO3,0,Lead carbonate,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+cinnabar,Cinnabar,HgS,0,Mercury(II) sulfide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+dolomite,Dolomite,CaMg(CO3)2,0,Calcium magnesium carbonate,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+goethite,Goethite,FeO(OH),0,Iron(III) oxide-hydroxide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+hematite,Hematite,Fe2O3,0,Iron(III) oxide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+lazurite,Lazurite,"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2",0,A complex sodalite-group tectosilicate; the main component of lapis lazuli,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+magnetite,Magnetite,Fe3O4,0,"Iron(II,III) oxide",UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+malachite,Malachite,Cu2CO3(OH)2,0,Basic copper carbonate,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+orpiment,Orpiment,As2S3,0,Arsenic trisulfide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+synth_malachite,Synthetic malachite,Cu2CO3(OH)2,1,Chemically identical to natural malachite,Kremer,powder pigment,,"Kremer Pigmente art. 44400, C.I. 77422, CAS 12069-69-1; label: Malachit, synthetisch"
+synth_ultramarine,Synthetic ultramarine,Na6-10Al6Si6O24S2-4,1,An idealized or simplified manufactured formula is often written as Na8Al6Si6O24S3,Maimeri,powder pigment,,"Maimeri art. 3517392, no. 392, PB29; label: Ultramarine Deep (Blu oltremare scuro)"
+verdigris,Verdigris,Cu(CH3COO)2.H2O or [Cu(CH3COO)2]2.Cu(OH)2.5H2O,1,"Neutral copper(II) acetate monohydrate, or the basic copper acetate formulation",Unknown,powder pigment,,

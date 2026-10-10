@@ -17,7 +17,9 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 |---|---|
 | `pigment_spectral_standards.db` | The database, SQLite, ready to open |
 | `scans/` | The 256 original `.dpt` scan files the database was built from |
-| `import_scans.py` | Builds the database from `scans/` and writes `import_report.md` |
+| `import_scans.py` | Adds new scans from `scans/` to the database and writes `import_report.md` |
+| `materials.csv` | The materials, their formulas, sources and specimen types, read by the script |
+| `WORKFLOW.md` | Step-by-step instructions for adding scans and new materials |
 | `import_report.md` | What the import loaded, corrected and skipped |
 | `pigment_spectral_standards_sqlite_schema.sql` | Creates an empty database in SQLite |
 | `pigment_spectral_standards_mysql_schema.sql` | The same design for MySQL 8 (schema only) |
@@ -36,10 +38,10 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 sqlite3 pigment_spectral_standards.db
 ```
 
-To rebuild it from the scans:
+To add new scans to it, see [`WORKFLOW.md`](WORKFLOW.md). The same script creates a new database from the schema when the database file does not exist:
 
 ```
-python3 import_scans.py scans pigment_spectral_standards_sqlite_schema.sql new_database.db
+python3 import_scans.py scans new_database.db --schema pigment_spectral_standards_sqlite_schema.sql
 ```
 
 To create an empty database from the schema:
