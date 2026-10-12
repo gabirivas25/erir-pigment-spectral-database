@@ -153,3 +153,19 @@ JOIN Specimen s ON s.SpecimenID = te.EntityID
 LEFT JOIN Material mat ON mat.MaterialID = s.MaterialID
 WHERE te.EntityType = 'Specimen';
 ```
+
+## How `match_unknown.py` works
+
+The script compares one unknown spectrum with the 242 ER-IR standards in the database and ranks the materials. It only reads the database; it never changes it. Nothing inside the script has to be edited to test a new spectrum: the file name and options go on the command line (`--from-transmittance`, `--top N`, `--db PATH`).
+
+1. **Read the unknown file** (`read_spectrum`). Text files, Perkin-Elmer `.ASC` files (data after a `#DATA` line) and Bruker OPUS binary `.dpt` files (needs `brukeropus`) are accepted. The points are sorted by wavenumber. With `--from-transmittance`, %T is converted to absorbance (2 - log10 %T). This conversion is for trying things out only; the database never converts spectra.
+2. **Put it on a common grid** (`resample`). The unknown must cover 700 to 3900 cm-1. It is interpolated onto 800 evenly spaced points from 650 to 3990 cm-1 (about 4.2 cm-1 apart), the same grid used for the standards.
+3. **Load the standards** (`load_standards`). One SQL query reads every ER-IR scan and its spectrum from `Measurement`, and each is put on the same grid.
+4. **Normalize** (`snv`). Each spectrum has its own mean subtracted and is divided by its own standard deviation (SNV), so overall height and offset do not count and only shape is compared.
+5. **Score with three methods** (`rank`):
+   - `pearson`: Pearson correlation of the SNV spectra.
+   - `deriv`: Savitzky-Golay first derivative (smoothing window of 11 points, about 42 cm-1, fitted with a quadratic), then SNV, then Pearson. This removes baseline slope and tilt and emphasizes band positions.
+   - `peaks`: SNV, find peaks (at least 0.5 SNV units high, at least 20 cm-1 apart), match peaks within 8 cm-1 (each used once). Score = 2 x matched / (peaks in unknown + peaks in standard).
+6. **Rank materials.** A material's score is the best score among its ER-IR scans. The top results are printed for each method.
+
+The settings in steps 2 and 5 (range check, window, prominence, spacing, tolerance) are design choices for this prototype; they were not tuned or validated against the literature. A high score means a similar spectral shape, not a confirmed identification. Spectra from other instruments or measurement types (ATR, transmission), and materials with few bands between 650 and 3990 cm-1 (such as cinnabar and orpiment), match poorly.
