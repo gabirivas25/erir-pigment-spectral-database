@@ -115,7 +115,7 @@ You will use only these two commands from now on (Windows: `python` instead of `
 
 # Part 2: Naming your files and folders
 
-The program reads each scan's **filename** to find the material, the specimen and ER-IR or ATR, and the scan's **folder** to find the date. The full rules, with examples and a checklist, are in **[`NAMING.md`](NAMING.md)**. Read it before you add scans. The short version:
+The program reads each scan's **filename** to find the material, the specimen and ER-IR or ATR, and the scan's **folder** (through its line in `scan_batches.csv`) to find the date and operator. The full rules, with examples and a checklist, are in **[`NAMING.md`](NAMING.md)**. Read it before you add scans. The short version:
 
 | Kind of scan | Filename |
 |---|---|
@@ -124,7 +124,7 @@ The program reads each scan's **filename** to find the material, the specimen an
 | ER-IR scan of a powdered pigment | `synth_pigmentname_ER_IR_scannumber.dpt` (for example `synth_verdigris_ER_IR_3.dpt`) |
 | ATR scan of a powdered pigment | `synth_pigmentname_ATR.dpt` (for example `synth_verdigris_ATR.dpt`) |
 
-New scans go in a **new folder named with the date**, for example `scans/05-11-2026/`, with one line for it in `scan_batches.csv` (date and operator).
+New scans go in a **new folder named with the date**, for example `scans/05-11-2026/`, with one line for it in `scan_batches.csv` (date and operator). Put the files directly in that folder: a subfolder per material is not needed.
 
 ---
 
@@ -302,7 +302,7 @@ Example: Jane Smith (Università di Padova) takes over the scanning from 12 Janu
    ```
    Jane Smith,jane.smith@unipd.it,University of Padova
    ```
-2. **Name the scans and put them in a new dated folder** as in Workflow 1 (`scans/2027-01-12/`).
+2. **Name the scans and put them in a new dated folder** as in Workflow 1 (`scans/12-01-2027/`).
 3. **Add the folder to `scan_batches.csv`** with her name, spelled exactly as in `operators.csv`:
    ```
    2027-01-12/,2027-01-12,Jane Smith

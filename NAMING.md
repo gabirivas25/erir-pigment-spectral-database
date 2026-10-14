@@ -104,7 +104,7 @@ scans/
 
 These are the folders from the first scan session. Their dates and operator are in `scan_batches.csv`: 23-04-2026 for the mineral folders, 10-10-2026 for `synthetics`, and 09-10-2026 for `carbonates/powder_dolomite`.
 
-Subfolders inside a dated folder are allowed (for example `scans/05-11-2026/realgar/`). The date and operator come from the line in `scan_batches.csv` whose folder name matches the start of the path.
+Put the scans directly in the dated folder. A subfolder per material is not needed, because the filename already says which material it is. Subfolders are allowed (for example `scans/05-11-2026/realgar/`) and make no difference: the date and operator come from the line in `scan_batches.csv` whose folder name matches the start of the path.
 
 ---
 
