@@ -26,7 +26,7 @@ WHAT IT DOES
     4. Adds, for each new scan: the measurement, its spectrum, its file record (path, size,
        checksum) and its link to the ATR standard of the same material.
     5. Creates materials, sources and specimens as they are needed, from materials.csv.
-       Each new scan gets its ScanDate and its operator from scan_batches.csv (longest matching
+       Each new scan gets its ScanDate (written DD-MM-YYYY in the sheet, stored as YYYY-MM-DD) and its operator from scan_batches.csv (longest matching
        folder prefix); operators are described in operators.csv and added to the database on first use.
     6. Keeps the `needs-atr-recollection` tag up to date and writes a report.
 
@@ -109,6 +109,18 @@ def load_operators(path):
     return ops
 
 
+def parse_batch_date(text, prefix):
+    """Accept DD-MM-YYYY (the form used in scan_batches.csv) or YYYY-MM-DD; return YYYY-MM-DD for the database."""
+    from datetime import datetime
+    for fmt in ("%d-%m-%Y", "%Y-%m-%d"):
+        if re.match(r"^\d{1,4}-\d{1,2}-\d{1,4}$", text):
+            try:
+                return datetime.strptime(text, fmt).strftime("%Y-%m-%d")
+            except ValueError:
+                pass
+    sys.exit("scan_batches.csv: '%s' is not a date in the form DD-MM-YYYY, for example 14-10-2026 (row '%s')" % (text, prefix))
+
+
 def load_batches(path, operators):
     """Return a list of (prefix, date, operator_name), longest prefix first."""
     if not os.path.exists(path):
@@ -124,8 +136,8 @@ def load_batches(path, operators):
             op = (r["operator"] or "").strip() or None
             if not prefix:
                 continue
-            if date and not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
-                sys.exit("scan_batches.csv: '%s' is not a date in the form YYYY-MM-DD (row '%s')" % (date, prefix))
+            if date:
+                date = parse_batch_date(date, prefix)
             if op and op not in operators:
                 sys.exit("scan_batches.csv: the operator '%s' (row '%s') is not in operators.csv. "
                          "Add the person there first, with the name spelled exactly the same." % (op, prefix))

@@ -99,7 +99,7 @@ If you see that, setup is finished. If you see an error, copy the whole message 
 - Type `python` instead of `python3`. If Windows says `python` is not recognized, type `py`.
 - To open a Terminal in the folder, use the File Explorer address bar trick in Step 3 (type `cmd` and press Enter).
 - Open the `.csv` files in **Notepad**, not Excel.
-- Folder and file names work the same as on a Mac. Use the same names and the same `/` in `scan_batches.csv` (for example `2026-11-05/`), not `\`.
+- Folder and file names work the same as on a Mac. Use the same names and the same `/` in `scan_batches.csv` (for example `05-11-2026/`), not `\`.
 - The program has not yet been run on a Windows computer. If it shows an error, copy the whole message and send it to Claude.
 
 ## Quick reference
@@ -124,7 +124,7 @@ The program reads each scan's **filename** to find the material, the specimen an
 | ER-IR scan of a powdered pigment | `synth_pigmentname_ER_IR_scannumber.dpt` (for example `synth_verdigris_ER_IR_3.dpt`) |
 | ATR scan of a powdered pigment | `synth_pigmentname_ATR.dpt` (for example `synth_verdigris_ATR.dpt`) |
 
-New scans go in a **new folder named with the date**, for example `scans/2026-11-05/`, with one line for it in `scan_batches.csv` (date and operator).
+New scans go in a **new folder named with the date**, for example `scans/05-11-2026/`, with one line for it in `scan_batches.csv` (date and operator).
 
 ---
 
@@ -134,7 +134,7 @@ New scans go in a **new folder named with the date**, for example `scans/2026-11
 > - **Windows:** right-click the file, **Open with**, **Notepad**.
 > - **Mac:** right-click the file, **Open With**, **TextEdit**, then **Format, Make Plain Text**.
 >
-> Excel changes dates such as `2026-11-05` into `11/5/2026`, which breaks the program. If you do use Excel, save as **CSV UTF-8**, and format the date column as Text first. Details: **How to edit the sheets** in Part 4.
+> Excel changes dates such as `05-11-2026` into its own date format, which breaks the program. If you do use Excel, save as **CSV UTF-8**, and format the date column as Text first. Details: **How to edit the sheets** in Part 4.
 
 Before each workflow, do these three things:
 
@@ -148,12 +148,12 @@ Example: three new calcite scans, measured on 5 November 2026.
 
 1. **Export the scans from OPUS as absorbance `.dpt` files.**
 2. **Name them** with the pattern in Part 2, for example `calcite_ER_IR_1_12.dpt`, `calcite_ER_IR_1_13.dpt`, `calcite_ER_IR_1_14.dpt` (the next scans of calcite specimen 1).
-3. **Make a new folder** inside the `scans` folder, named with the date of the scan: `scans/2026-11-05`. Put the new files inside it. Do **not** put new scans in the older folders (carbonates, oxides, silicates, sulfides, powder_atr, synthetics): those folders already carry an older date.
+3. **Make a new folder** inside the `scans` folder, named with the date of the scan: `scans/05-11-2026`. Put the new files inside it. Do **not** put new scans in the older folders (carbonates, oxides, silicates, sulfides, powder_atr, synthetics): those folders already carry an older date.
 4. **Tell the program the date and who scanned.** Open `scan_batches.csv` (see **How to edit the sheets** below) and add one line at the bottom:
    ```
-   2026-11-05/,2026-11-05,Maria Gabriela Rivas Carmona
+   05-11-2026/,05-11-2026,Maria Gabriela Rivas Carmona
    ```
-   The first part is the folder name, followed by a slash. The second part is the date, written year-month-day. The third part is the operator, spelled **exactly** as in `operators.csv`.
+   The first part is the folder name, followed by a slash. The second part is the date, written day-month-year. The third part is the operator, spelled **exactly** as in `operators.csv`.
 5. **Check first.** In the Terminal, type the dry-run command and press Enter:
    ```
    python3 import_scans.py scans pigment_spectral_standards.db --dry-run
@@ -210,7 +210,7 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
 ### Step 3: Put the scans in a new dated folder
 
 1. Open the `scans` folder in the repository.
-2. Create a new folder named with the scan date: `2026-11-05`.
+2. Create a new folder named with the scan date: `05-11-2026`.
 3. Copy the three files into it.
 
 ### Step 4: Tell the program the date and the operator
@@ -218,9 +218,9 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
 1. Open `scan_batches.csv` the same way as in step 1 (plain-text editor).
 2. At the end of the last line press **Enter** and type:
    ```
-   2026-11-05/,2026-11-05,Maria Gabriela Rivas Carmona
+   05-11-2026/,05-11-2026,Maria Gabriela Rivas Carmona
    ```
-   The first part is the folder name followed by a slash, the second part is the date (year-month-day), the third is the operator's name exactly as in `operators.csv`. Save the file.
+   The first part is the folder name followed by a slash, the second part is the date (day-month-year), the third is the operator's name exactly as in `operators.csv`. Save the file.
 
 ### Step 5: Do a trial run
 
@@ -330,13 +330,13 @@ These are plain text tables. Each line is one row, and commas separate the colum
 **The safest way is a plain text editor**: Notepad on Windows, or TextEdit on Mac (choose **Format, then Make Plain Text** first). Open the file, add your line at the bottom, press Enter at the end so the file ends with a new line, and save.
 
 If you prefer Excel, Numbers or Google Sheets, be careful:
-- **Dates:** they change dates such as `2026-11-05` into `11/5/2026`, which breaks the program. Format the date columns as **Text** before typing, or use a text editor.
+- **Dates:** they change dates such as `05-11-2026` into their own date format, which breaks the program. Format the date columns as **Text** before typing, or use a text editor.
 - **Saving:** save as **CSV (UTF-8)**, never as `.xlsx`.
 
 Rules for all sheets:
 - No empty lines in the middle.
 - A value that contains a comma must be inside double quotes, for example `"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2"`.
-- Dates are always year-month-day with dashes: `2026-11-05`.
+- Dates are always day-month-year with dashes: `05-11-2026`. The database stores them internally as `2026-11-05`; you never type that form.
 - In `scan_batches.csv`, the columns are `path_prefix,date,operator`. The first column is a folder name **ending with a slash**. The longest matching folder wins, so a line for `carbonates/powder_dolomite/` overrides the line for `carbonates/`.
 - The operator name in `scan_batches.csv` must be spelled exactly as in `operators.csv`.
 - In `operators.csv`, the columns are `name,email,institution`.
