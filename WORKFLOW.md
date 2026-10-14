@@ -305,7 +305,7 @@ Example: Jane Smith (Università di Padova) takes over the scanning from 12 Janu
 2. **Name the scans and put them in a new dated folder** as in Workflow 1 (`scans/12-01-2027/`).
 3. **Add the folder to `scan_batches.csv`** with her name, spelled exactly as in `operators.csv`:
    ```
-   2027-01-12/,2027-01-12,Jane Smith
+   12-01-2027/,12-01-2027,Jane Smith
    ```
 4. Dry run, run, commit and push as in Workflow 1.
 
@@ -377,3 +377,101 @@ A run is also all or nothing: if the program stops with an error, nothing is sav
 - It never converts a spectrum. It loads the numbers in the file, so the file must already be absorbance.
 - It never changes a measurement that is already in the database.
 - It never records who the operator is by guessing: it only uses `scan_batches.csv`.
+
+---
+
+# Part 5: What if...
+
+Each case below says what you see, what it means and what to do. Every fix ends the same way: dry run, run, commit and push (Workflow 1, steps 5 to 8). Whenever you change the database by hand in DB Browser, remember to click **Write Changes** and close DB Browser before you run the program.
+
+## A file does not follow the naming rules
+
+**What you see:** the file is listed under "Files whose name matched no rule" in the report. It is not loaded, and nothing is lost.
+
+**What to do:**
+1. Compare the name with the table of right and wrong names in [`NAMING.md`](NAMING.md).
+2. Rename the file in Finder or File Explorer (right-click, **Rename**). Do not change anything else.
+3. Run the dry run again. The file should now appear under "Added in this run".
+
+If the name is correct but the material is new, the key is not in `materials.csv` yet. Add it (Workflow 2, Step 1) and run again.
+
+If many files have the wrong pattern (for example `hematite2.16.dpt`), rename them one at a time or ask Claude to write a rename list for you. Never keep two copies of a scan under different names in the `scans` folder.
+
+## A file was already loaded under a wrong name
+
+**What you see:** the report said the file was added, but you now see that the material, the specimen number or ER-IR/ATR in its name was wrong. The old name is stored in the database (table `SpectralFile`, column `FilePath`).
+
+**What to do:** delete the scan with the two SQL lines in **Workflow 4**, using the old path, rename the file in the `scans` folder, and run the program again. Do not delete an ATR standard while ER-IR scans are linked to it.
+
+## A file is not in absorbance
+
+The database holds absorbance only. The program cannot tell what a file contains, so a transmittance (%T) or reflectance file would be loaded as if it were absorbance. Absorbance values in this database are small numbers (255 of the 256 scans stay below 13, and most below 3), a %T file runs from 0 to 100, and a reflectance file from 0 to 1 or 0 to 100.
+
+**Before loading** (the file is still outside the database): open it in a text editor, look at the second column, and if the values are not absorbance, re-export the spectrum from OPUS as absorbance, as for all other scans. Do not convert numbers by hand, and do not load spectra from other measurement types (for example transmission) as ER-IR or ATR.
+
+**To test a transmittance file against the database without loading it**, use `match_unknown.py` with `--from-transmittance` (see the README).
+
+**After loading by mistake:** use this query in the **Execute SQL** tab to list scans with values outside the normal range:
+```sql
+SELECT sf.FilePath, MIN(json_extract(j.value,'$[1]')) AS lowest, MAX(json_extract(j.value,'$[1]')) AS highest
+FROM Measurement m
+JOIN SpectralFile sf ON sf.MeasurementID = m.MeasurementID, json_each(m.SpectrumData) j
+GROUP BY m.MeasurementID
+HAVING highest > 10 OR lowest < -2
+ORDER BY highest DESC;
+```
+A scan on the list is not always wrong (a very strong band can be high), so look at it first. If it is wrong, remove it with Workflow 4 and load the corrected export.
+
+## A file is empty or unreadable
+
+**What you see:** the file is listed under "Skipped: empty or unreadable". **What to do:** re-export it from OPUS and replace the file. A file that is not plain text (for example the original OPUS file instead of the exported `.dpt`) is skipped in the same way.
+
+## The same scan is in the folder twice
+
+**What you see:** the report lists "Removed as duplicates". Files with identical intensity values for the same material and mode are loaded once, and the lowest scan number is kept. **What to do:** nothing in the database. You may delete the extra file from the `scans` folder yourself.
+
+## A new specimen of a mineral that is already in the database
+
+Give it the next specimen number: if calcite has specimens 1 and 2, the new piece is `calcite_ER_IR_3_0.dpt`, and its ATR standard is not needed because the material already has one. The specimen is created automatically from the material's line in `materials.csv` (Workflow 1).
+
+## A new ATR file for a material that already has one
+
+A second ATR file is loaded, but the existing links are kept (Workflow 3). Use this only when you really need two standards, and name it clearly so it is not confused with the first.
+
+## A powdered natural mineral
+
+The naming rules treat powders as synthetic pigments, so they do not cover this case. Precedent in the database: the leftover dolomite powder is recorded as **dolomite specimen 2**, with the ordinary mineral name. Do the same: `mineralname_ER_IR_specimen_scan.dpt`, with the next specimen number. The new specimen takes its type from the material's line in `materials.csv`; to record this specimen as `powder pigment` or `ground mineral`, change it by hand (next section).
+
+## The date, operator or other information is missing or wrong on scans already loaded
+
+**What you see:** "Scans added without a date" or "without an operator" in the report, or a wrong value you noticed later. The program never changes a scan that is already in the database, so editing `scan_batches.csv` afterwards has no effect on it. Fix it by hand.
+
+**For a few values:** open the database in DB Browser, click **Browse Data**, choose the table, double-click the cell, type the value, press Enter, then **Write Changes**.
+
+| What to fix | Table and column | What to type |
+|---|---|---|
+| Scan date | `Measurement`, `ScanDate` | The date as `2026-10-14` (year-month-day). This is the one place where the database form is typed. |
+| Operator | `Measurement`, `OperatorID` | The number of the person in the `Operator` table (look it up there) |
+| Source or product notes of a specimen | `Specimen`, `SourceNotes` | Free text, for example the label text |
+| Preparation | `Specimen`, `PreparationNotes` | Free text |
+| Specimen type | `Specimen`, `SpecimenTypeID` | `1` powder pigment, `2` ground mineral, `3` mineral fragment |
+| Description or formula of a material | `Material`, `Description`, `ChemicalFormula` | Free text |
+
+**For a whole folder at once:** in the **Execute SQL** tab, change the folder name, date and operator number in this example, then run it and click **Write Changes**:
+```sql
+UPDATE Measurement
+SET ScanDate = '2026-10-14', OperatorID = 1
+WHERE MeasurementID IN (SELECT MeasurementID FROM SpectralFile WHERE FilePath LIKE '14-10-2026/%');
+```
+The text under `Execution finished` tells you how many rows were changed. If it says 0, the folder name is wrong.
+
+Do not edit `SpectrumData`, `FilePath`, `Checksum` or `ReferenceMeasurementID` by hand.
+
+## You forgot the folder line or the material line
+
+- **No line in `scan_batches.csv`:** the scans load without date and operator. Fix them as in the section above.
+- **No line in `materials.csv`:** the scans are not loaded. Add the line (Workflow 2, Step 1) and run again; nothing else is needed.
+
+## The program stops with an error
+
+Nothing is saved when the program stops (a run is all or nothing). Read the last line of the message: it names the file and the row. The usual causes are a date that is not `DD-MM-YYYY`, an operator not listed in `operators.csv`, or a sheet opened and saved in Excel. Fix the sheet and run again.
