@@ -60,7 +60,7 @@ CONFIG = {
     "ER-IR": ("4 cm-1", None, 64, "ZnSe", "30 um", None),
     "ATR": ("4 cm-1", None, 32, "ZnSe", None, "Positioning speed: medium. Pressure: low."),
 }
-ATR_SPECIMEN_NOTE = "Reference standard for comparison"
+ATR_SPECIMEN_NOTE = "Reference standard for comparison; ground to a powder from one of the specimens"
 TAG_MISSING_ATR = "needs-atr-recollection"
 
 # ---------------------------------------------------------------------------
@@ -366,7 +366,7 @@ def main():
             return spec_id[k]
         stype = pick("SpecimenType", "TypeName", m["specimen_type"], "SpecimenTypeID") if m["specimen_type"] else None
         if n == 0 and not m["is_synthetic"]:
-            row = (None, ATR_SPECIMEN_NOTE, None)
+            row = (pick("SpecimenType", "TypeName", "ground mineral", "SpecimenTypeID"), ATR_SPECIMEN_NOTE, None)
         else:
             row = (stype, m["preparation_notes"], m["source_notes"])
         cur.execute("INSERT INTO Specimen(SpecimenTypeID,PreparationNotes,SourceNotes,MaterialID,SourceID) "
