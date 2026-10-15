@@ -10,8 +10,8 @@ FILE can be:
     .asc (Perkin-Elmer ASCII)        two columns after a "#DATA" line
 
 The database holds ABSORBANCE. If your file is %T, add --from-transmittance
-(absorbance = 2 - log10(%T)). That conversion is for trying things out only;
-the database and its import tool never convert spectra.
+(absorbance = 2 - log10(%T)). That conversion is for trying things out only.
+To load a batch that was exported as %T, mark it in scan_batches.csv instead (see WORKFLOW.md).
 
 Methods (the same as the Match screen design):
   pearson  SNV, then Pearson correlation on a common grid (650-3990 cm-1, 800 points)

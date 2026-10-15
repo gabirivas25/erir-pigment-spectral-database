@@ -22,7 +22,7 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 | `match_unknown.py` | Matches an unknown spectrum against the ER-IR standards (Pearson, first-derivative Pearson, peak position) and prints the top materials. Run `python3 match_unknown.py FILE`; needs `pip install numpy scipy` (plus `brukeropus` for Bruker `.dpt` binary files). A high score means a similar shape, not a confirmed identification; it never changes the database |
 | `database_summary.py` | Prints the materials, the scan counts per acquisition mode and the total number of scans. Read-only; works on Mac and Windows, where there is no `sqlite3` command |
 | `materials.csv` | The materials, their formulas, sources and specimen types, read by the script |
-| `scan_batches.csv` | The date and operator of each group of scans, by folder, read by the script |
+| `scan_batches.csv` | The date and operator of each group of scans, by folder, and the unit if a group was not exported as absorbance, read by the script |
 | `operators.csv` | The people who make scans: name, email, institution, read by the script |
 | `HANDOVER.md` | What to do when the person running the database leaves: ownership, operators, file list |
 | `scan_rename_map.csv` | Old and new filename of every scan, from the renaming to the current naming convention (also records the lazurite point numbers) |
@@ -70,7 +70,7 @@ print(conn.execute("SELECT * FROM Material").fetchall())
 
 Each measurement holds its whole spectrum in one column, `Measurement.SpectrumData`, as a JSON array of `[wavenumber, intensity]` pairs, for example `[[598.1, 0.52], [600.2, 0.53], ...]`. An ER-IR scan has 1,660 pairs and an ATR scan has 1,934. The pairs stay together, and SQLite refuses text in this column that is not valid JSON.
 
-The database holds absorbance data only. Spectra are converted to absorbance in OPUS before upload, and `IntensityMode` is filled in as `Absorbance`. The original `.dpt` file for each measurement is recorded in `SpectralFile`, with its size and a checksum.
+The database holds absorbance data only. Spectra are exported as absorbance from OPUS, and `IntensityMode` is filled in as `Absorbance`. If a batch was exported as transmittance or reflectance by mistake, mark its line in `scan_batches.csv` (`intensity` column) and `import_scans.py` converts it to absorbance while loading; the measurement's Notes record the conversion. The original `.dpt` file for each measurement is recorded in `SpectralFile`, with its size and a checksum.
 
 ## Schema overview (17 tables)
 

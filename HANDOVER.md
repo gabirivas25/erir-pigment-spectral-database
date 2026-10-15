@@ -64,7 +64,7 @@ A new operator should use the same setup. If the instrument or the settings ever
 | `match_unknown.py` | Tries to identify an unknown spectrum by comparing it with the database (read-only) | Only if the matching method changes |
 | `database_summary.py` | Prints what is in the database (materials, scan counts); a check that the database opens | Never, unless the schema changes |
 | `materials.csv` | One line per material: name, formula, source, specimen type | Add a line for each new material |
-| `scan_batches.csv` | Date and operator of each folder of scans | Add a line for each new folder |
+| `scan_batches.csv` | Date, operator and (optionally) unit of each folder of scans | Add a line for each new folder; fill in `intensity` only if the folder is not absorbance |
 | `operators.csv` | The people who make scans | Add a line for each new person |
 | `scan_rename_map.csv` | Old and new filename of every scan from the renaming in 2026, with lazurite point numbers | Not edited. It is a record |
 | `import_report.md` | What the last import loaded, skipped and found wrong | Written by the program |

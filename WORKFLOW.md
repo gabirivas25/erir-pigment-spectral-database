@@ -12,7 +12,7 @@ The program needs four things, all in this repository:
 |---|---|
 | `scans/` | The scan files themselves |
 | `materials.csv` | One line per material: name, formula, source, specimen type |
-| `scan_batches.csv` | The date and the operator (the person who scanned) of each group of scans |
+| `scan_batches.csv` | The date and the operator (the person who scanned) of each group of scans, and the unit if a group was not exported as absorbance |
 | `operators.csv` | The people who do scans: name, email, institution |
 
 ## What the program fills in, and what it does not
@@ -337,7 +337,7 @@ Rules for all sheets:
 - No empty lines in the middle.
 - A value that contains a comma must be inside double quotes, for example `"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2"`.
 - Dates are always day-month-year with dashes: `05-11-2026`. The database stores them internally as `2026-11-05`; you never type that form.
-- In `scan_batches.csv`, the columns are `path_prefix,date,operator`. The first column is a folder name **ending with a slash**. The longest matching folder wins, so a line for `carbonates/powder_dolomite/` overrides the line for `carbonates/`.
+- In `scan_batches.csv`, the columns are `path_prefix,date,operator,intensity`. The first column is a folder name **ending with a slash**. Leave `intensity` blank for absorbance, which is the normal case. Fill it in only for a batch exported as transmittance or reflectance (see **A file is not in absorbance**). The longest matching folder wins, so a line for `carbonates/powder_dolomite/` overrides the line for `carbonates/`.
 - The operator name in `scan_batches.csv` must be spelled exactly as in `operators.csv`.
 - In `operators.csv`, the columns are `name,email,institution`.
 
@@ -374,7 +374,7 @@ A run is also all or nothing: if the program stops with an error, nothing is sav
 ## What the program never does
 
 - It never changes or deletes a scan file.
-- It never converts a spectrum. It loads the numbers in the file, so the file must already be absorbance.
+- It never converts a spectrum on its own. It loads the numbers in the file as they are. The only exception is a folder whose line in `scan_batches.csv` has a unit in the `intensity` column: those scans are converted to absorbance while loading, and the measurement's Notes say so.
 - It never changes a measurement that is already in the database.
 - It never records who the operator is by guessing: it only uses `scan_batches.csv`.
 
@@ -405,9 +405,31 @@ If many files have the wrong pattern (for example `hematite2.16.dpt`), rename th
 
 ## A file is not in absorbance
 
-The database holds absorbance only. The program cannot tell what a file contains, so a transmittance (%T) or reflectance file would be loaded as if it were absorbance. Absorbance values in this database are small numbers (255 of the 256 scans stay below 13, and most below 3), a %T file runs from 0 to 100, and a reflectance file from 0 to 1 or 0 to 100.
+The database holds absorbance only. A .dpt file has no unit label, so the program cannot read the unit from the file. You tell it in `scan_batches.csv`.
 
-**Before loading** (the file is still outside the database): open it in a text editor, look at the second column, and if the values are not absorbance, re-export the spectrum from OPUS as absorbance, as for all other scans. Do not convert numbers by hand, and do not load spectra from other measurement types (for example transmission) as ER-IR or ATR.
+**Absorbance (the normal case).** Leave the `intensity` column blank. As a safety check, the program **stops** and saves nothing if a scan in such a folder looks like %T or %R (its largest value is between 15 and 120). The message lists the files. Absorbance values in this database are small numbers: all but one scan stay below 13, and most below 3. A %T file runs up to about 100.
+
+**Transmittance or reflectance by mistake.** Keep the files in their dated folder and write the unit in the `intensity` column of the folder's line:
+
+```
+05-11-2026/,05-11-2026,Maria Gabriela Rivas Carmona,transmittance_percent
+```
+
+| Value in `intensity` | The file contains | Conversion |
+|---|---|---|
+| (blank) or `absorbance` | Absorbance | none |
+| `transmittance_percent` | %T, 0 to 100 | A = 2 - log10(%T) |
+| `transmittance` | T, 0 to 1 | A = -log10(T) |
+| `reflectance_percent` | %R, 0 to 100 | A = 2 - log10(%R) |
+| `reflectance` | R, 0 to 1 | A = -log10(R) |
+
+The program converts each point while loading and stores the absorbance. The original file is not changed. The measurement's Notes say, for example, "Converted to absorbance by import_scans.py from %T (A = 2 - log10(%T))". The report lists the converted files under "Converted to absorbance". A file with a value of zero or less cannot be converted: the program skips it and lists it.
+
+**Limits to know:**
+- The program cannot tell a 0 to 1 transmittance file from absorbance, because the numbers look alike. For fractions you must always write the unit.
+- If the check stops a folder that really is absorbance (an unusually large absorbance), write `absorbance` in the `intensity` column to confirm it.
+- Reflectance converted this way is pseudo-absorbance, as in the thesis. It does not correct Reststrahlen or other optical distortions.
+- Mixed folders: if one folder has both absorbance and %T files, split them into two folders with a line each.
 
 **To test a transmittance file against the database without loading it**, use `match_unknown.py` with `--from-transmittance` (see the README).
 

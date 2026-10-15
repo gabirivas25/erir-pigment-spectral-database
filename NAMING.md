@@ -36,7 +36,7 @@ How to read them:
 4. **Write `ER_IR` and `ATR` in capitals, the material in lower case.** The program ignores capitals, but one style keeps the folder easy to read.
 5. **Minerals have a specimen number, powdered pigments do not.** A mineral can have several pieces (specimens). A powdered pigment is one jar, so it only has a scan number.
 6. **A mineral has one ATR standard**, so its ATR file has no numbers.
-7. **The file type is `.dpt`**, exported from OPUS as **absorbance**.
+7. **The file type is `.dpt`**, exported from OPUS as **absorbance**. If a batch was exported as transmittance or reflectance by mistake, you can still load it: mark its line in `scan_batches.csv` with the unit (see WORKFLOW.md, part 5, "A file is not in absorbance").
 
 ### What "specimen" and "scan number" mean
 

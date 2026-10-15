@@ -30,7 +30,11 @@ WHAT IT DOES
        folder prefix); operators are described in operators.csv and added to the database on first use.
     6. Keeps the `needs-atr-recollection` tag up to date and writes a report.
 
-It never modifies the scans. Nothing is converted: spectra are loaded as they are in the file.
+It never modifies the scans. Spectra are loaded as they are in the file, with one exception: a batch marked
+in the `intensity` column of scan_batches.csv as transmittance or reflectance is converted to absorbance while
+loading (A = 2 - log10(%T), or A = -log10(T) for fractions; the same for reflectance). The original file is
+untouched, and the measurement's Notes say that it was converted. A batch with a blank `intensity` is taken
+to be absorbance, and the program stops if a scan in it looks like %T.
 The whole run is one transaction: if anything fails, nothing is saved.
 
 FILENAME RULES  (the key is the file_key column of materials.csv; capitals do not matter)
@@ -63,7 +67,37 @@ CONFIG = {
 ATR_SPECIMEN_NOTE = "Reference standard for comparison; ground to a powder from one of the specimens"
 TAG_MISSING_ATR = "needs-atr-recollection"
 
+# The units a batch can be marked with in the `intensity` column of scan_batches.csv.
+# Value: (percent?, name used in the Notes). Absorbance (or blank) means: load as it is.
+CONVERT_UNITS = {
+    "transmittance_percent": (True, "%T"),
+    "transmittance": (False, "T"),
+    "reflectance_percent": (True, "%R"),
+    "reflectance": (False, "R"),
+}
+VALID_UNITS = ["absorbance"] + list(CONVERT_UNITS)
+
 # ---------------------------------------------------------------------------
+
+
+def to_absorbance(pts, unit):
+    """Convert [(wavenumber, T or R)] to absorbance, or return None if a value is zero or negative."""
+    import math
+    percent = CONVERT_UNITS[unit][0]
+    out = []
+    for x, y in pts:
+        v = y / 100.0 if percent else y
+        if v <= 0:
+            return None
+        out.append((x, -math.log10(v)))
+    return out
+
+
+def looks_like_percent(pts):
+    """True if the largest value is between 15 and 120 and none is below -1. That looks like %T or %R
+    (a clean baseline sits near 100); real absorbance in this database stays below about 13."""
+    ys = [y for _, y in pts]
+    return min(ys) >= -1 and 15 < max(ys) <= 120
 
 
 def load_materials(path):
@@ -122,7 +156,8 @@ def parse_batch_date(text, prefix):
 
 
 def load_batches(path, operators):
-    """Return a list of (prefix, date, operator_name), longest prefix first."""
+    """Return a list of (prefix, date, operator_name, unit), longest prefix first.
+    unit is None for a blank `intensity` column (taken to be absorbance), else one of VALID_UNITS."""
     if not os.path.exists(path):
         return []
     rows = []
@@ -134,23 +169,27 @@ def load_batches(path, operators):
         for r in rd:
             prefix, date = (r["path_prefix"] or "").strip(), (r["date"] or "").strip()
             op = (r["operator"] or "").strip() or None
+            unit = (r.get("intensity") or "").strip().lower() or None
             if not prefix:
                 continue
+            if unit is not None and unit not in VALID_UNITS:
+                sys.exit("scan_batches.csv: the intensity '%s' (row '%s') is not one of: %s. "
+                         "Leave it blank for absorbance." % (unit, prefix, ", ".join(VALID_UNITS)))
             if date:
                 date = parse_batch_date(date, prefix)
             if op and op not in operators:
                 sys.exit("scan_batches.csv: the operator '%s' (row '%s') is not in operators.csv. "
                          "Add the person there first, with the name spelled exactly the same." % (op, prefix))
-            rows.append((prefix, date or None, op))
+            rows.append((prefix, date or None, op, unit))
     return sorted(rows, key=lambda x: -len(x[0]))
 
 
 def batch_for(path, batches):
-    """Return (date, operator_name) of the longest folder prefix that matches, else (None, None)."""
-    for prefix, date, op in batches:
+    """Return (date, operator_name, unit) of the longest folder prefix that matches, else (None, None, None)."""
+    for prefix, date, op, unit in batches:
         if path.startswith(prefix):
-            return date, op
-    return None, None
+            return date, op, unit
+    return None, None, None
 
 
 def read_dpt(path):
@@ -330,6 +369,31 @@ def main():
     # ---- skip what is already loaded; remove duplicates ----
     already = [r for r in records if r["path"] in have_paths]
     records = [r for r in records if r["path"] not in have_paths]
+
+    # ---- convert batches marked as transmittance or reflectance; stop on a scan that looks like %T ----
+    converted, unconvertible, suspicious = [], [], []
+    for r in list(records):
+        unit = batch_for(r["path"], batches)[2]
+        if unit in CONVERT_UNITS:
+            new = to_absorbance(r["pts"], unit)
+            if new is None:
+                unconvertible.append(r["rel"])
+                records.remove(r)
+                continue
+            percent, label = CONVERT_UNITS[unit]
+            r["pts"] = new
+            r["note"] = "Converted to absorbance by import_scans.py from %s (A = %s)" % (
+                label, "2 - log10(%s)" % label if percent else "-log10(%s)" % label)
+            converted.append((r["rel"], label))
+        elif unit is None and looks_like_percent(r["pts"]):
+            suspicious.append(r["rel"])
+    if suspicious:
+        con.rollback()
+        sys.exit("Nothing was saved. These scans look like %T or %R, not absorbance (their largest value is between 15 and 120):\n  "
+                 + "\n  ".join(sorted(suspicious)[:15]) + ("\n  ... and %d more" % (len(suspicious) - 15) if len(suspicious) > 15 else "")
+                 + "\nIf they are transmittance or reflectance, set the `intensity` column of their line in "
+                 "scan_batches.csv (for example transmittance_percent) and run again. If they really are absorbance, "
+                 "write `absorbance` in that column.")
     groups = collections.defaultdict(list)
     for r in records:
         groups[(r["material"], r["mode"], spectrum_hash([y for _, y in r["pts"]]))].append(r)
@@ -381,12 +445,13 @@ def main():
         sid = specimen(key, r["specimen"])
         ref = atr_meas.get(key) if mode == "ER-IR" else None
         spectrum = json.dumps([[x, y] for x, y in r["pts"]], separators=(",", ":"))
-        bdate, bop = batch_for(r["path"], batches)
+        bdate, bop, _ = batch_for(r["path"], batches)
         cur.execute(
             "INSERT INTO Measurement(SpecimenID,InstrumentID,InstrumentConfigurationID,AcquisitionModeID,"
-            "SpectrumData,OperatorID,MeasurementSiteTypeID,ReferenceMeasurementID,SpecimenSpotDescription,ScanDate) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?)",
-            (sid, instrument_id, cfg_id[mode], mode_id[mode], spectrum, operator(bop), site, ref, r["spot"], bdate))
+            "SpectrumData,OperatorID,MeasurementSiteTypeID,ReferenceMeasurementID,SpecimenSpotDescription,ScanDate,Notes) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            (sid, instrument_id, cfg_id[mode], mode_id[mode], spectrum, operator(bop), site, ref, r["spot"], bdate,
+             r.get("note")))
         if bdate is None:
             undated.append(r["path"])
         if bop is None:
@@ -445,6 +510,10 @@ def main():
     L += ["- %s, %s: %d" % (m, mode, n) for (m, mode), n in sorted(added.items())] or ["(nothing new)"]
     if relinked:
         L.append("- %d earlier ER-IR scans were linked to an ATR standard that is now available." % relinked)
+    L.append("\n## Converted to absorbance (%d)\n" % len(converted))
+    L += ["- `%s` (from %s)" % x for x in sorted(converted)] or ["(none)"]
+    L.append("\n## Skipped: could not be converted (%d)\n" % len(unconvertible))
+    L += ["- `%s` (a value of zero or less cannot be converted)" % x for x in sorted(unconvertible)] or ["(none)"]
     L.append("\n## Scans added without a date (%d)\n" % len(undated))
     L += ["- `%s`" % x for x in sorted(undated)] or ["(none)"]
     if undated:
@@ -469,7 +538,7 @@ def main():
     L.append("\n## Things to check\n")
     L.append("- Materials with ER-IR scans but no ATR standard (tagged `%s`): %s"
              % (TAG_MISSING_ATR, ", ".join(no_atr) or "none"))
-    L.append("- Spectra are loaded exactly as in the files and never converted.")
+    L.append("- Spectra are loaded exactly as in the files, except those listed under \"Converted to absorbance\" above.")
     rep = a.report or os.path.join(os.path.dirname(os.path.abspath(a.database)), "import_report.md")
     if a.dry_run:
         con.rollback()
