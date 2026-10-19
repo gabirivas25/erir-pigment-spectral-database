@@ -13,4 +13,9 @@ malachite,Malachite,Cu2CO3(OH)2,0,Basic copper carbonate,UniPD mineral collectio
 orpiment,Orpiment,As2S3,0,Arsenic trisulfide,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,
 synth_malachite,Synthetic malachite,Cu2CO3(OH)2,1,Chemically identical to natural malachite,Kremer,powder pigment,,"Kremer Pigmente art. 44400, C.I. 77422, CAS 12069-69-1; label: Malachit, synthetisch"
 synth_ultramarine,Synthetic ultramarine,Na6-10Al6Si6O24S2-4,1,An idealized or simplified manufactured formula is often written as Na8Al6Si6O24S3,Maimeri,powder pigment,,"Maimeri art. 3517392, no. 392, PB29; label: Ultramarine Deep (Blu oltremare scuro)"
-synth_verdigris,Verdigris,Cu(CH3COO)2.H2O or [Cu(CH3COO)2]2.Cu(OH)2.5H2O,1,"Neutral copper(II) acetate monohydrate, or the basic copper acetate formulation",Kremer,powder pigment,,"Kremer Pigmente; label: Grünspan, synthetisch"
+synth_verdigris,Verdigris,Cu(CH3COO)2·[Cu(OH)2]3·2H2O,1,Basic copper acetate,Kremer,powder pigment,,"Kremer Pigmente; label: Grünspan, synthetisch; C.I. PG 20.77408"
+synth_lead_white,Lead white,PbCO3,1,"Lead carbonate, synthetic (cerussite)",Kremer,powder pigment,,Kremer Pigmente; label: Kremserweiß; C.I. PW 1.77596
+synth_minium,Minium,Pb3O4,1,"Red lead, lead(II,IV) oxide",Kremer,powder pigment,,Kremer Pigmente; label: Mennige; C.I. PR 105.77578
+synth_vermilion,Vermilion,HgS,1,Mercury sulphide,Zecchi,powder pigment,,Zecchi; product: Vermilion genuine deep
+synth_lead_tin_yellow_light,Lead-tin yellow light,Pb2SnO4,1,Lead stannate,Kremer,powder pigment,,Kremer Pigmente; lead-tin yellow light; C.I. 77629
+synth_lead_tin_yellow_dark,Lead-tin yellow dark,Pb2SnO4,1,Lead stannate,Kremer,powder pigment,,Kremer Pigmente; lead-tin yellow dark; C.I. 77629
