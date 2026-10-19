@@ -3,6 +3,7 @@
 
 Usage:
     python match_unknown.py FILE [--db pigment_spectral_standards.db] [--from-transmittance] [--top 5]
+    python match_unknown.py FOLDER            (matches every spectrum file in the folder, one table)
 
 FILE can be:
     .txt / .csv / .dpt (plain text)  two columns: wavenumber, intensity
@@ -139,14 +140,59 @@ def rank(unknown, std, method):
     pu = peaks_of(u) if method == "peaks" else None
     best = {}
     for s in std:
-        v = prep(s["raw"], method)
+        v = s["cache"][method] if "cache" in s else prep(s["raw"], method)
         if method == "peaks":
-            sc = peak_score(pu, peaks_of(v))
+            sc = peak_score(pu, s["cache"]["peaks_pts"] if "cache" in s else peaks_of(v))
         else:
             sc = float(np.corrcoef(u, v)[0, 1])
         if s["material"] not in best or sc > best[s["material"]][0]:
             best[s["material"]] = (sc, s["id"])
     return sorted(((m, sc, i) for m, (sc, i) in best.items()), key=lambda t: -t[1])
+
+
+def add_cache(std):
+    """Prepare every standard once, so a folder of files is fast."""
+    for s in std:
+        s["cache"] = {m: prep(s["raw"], m) for m in ("pearson", "deriv", "peaks")}
+        s["cache"]["peaks_pts"] = peaks_of(s["cache"]["peaks"])
+
+
+SPECTRUM_EXT = (".dpt", ".txt", ".csv", ".asc")
+
+
+def run_folder(folder, std, from_transmittance, top):
+    files = sorted(f for f in os.listdir(folder)
+                   if f.lower().endswith(SPECTRUM_EXT) and not f.startswith("."))
+    if not files:
+        sys.exit("No spectrum files (.dpt, .txt, .csv, .asc) in %s" % folder)
+    add_cache(std)
+    print("Folder: %s  (%d files)" % (folder, len(files)))
+    print("Standards compared: %d ER-IR scans" % len(std))
+    print("Each cell: material score. Top %d per method. The database is not changed.\n" % top)
+    first = {m: {} for m in ("pearson", "deriv", "peaks")}
+    problems = []
+    for f in files:
+        try:
+            x, y = read_spectrum(os.path.join(folder, f), from_transmittance)
+            g = resample(x, y)
+        except SystemExit as e:
+            problems.append((f, str(e)))
+            continue
+        print("### %s" % f)
+        for method in ("pearson", "deriv", "peaks"):
+            r = rank(g, std, method)[:top]
+            first[method][r[0][0]] = first[method].get(r[0][0], 0) + 1
+            print("  %-8s %s" % (method, "; ".join("%s %.2f" % (m, sc) for m, sc, _ in r)))
+    done = len(files) - len(problems)
+    print("\n## First place, counted over %d files" % done)
+    for method in ("pearson", "deriv", "peaks"):
+        c = sorted(first[method].items(), key=lambda t: -t[1])
+        print("  %-8s %s" % (method, "; ".join("%s %d" % (m, n) for m, n in c)))
+    if problems:
+        print("\n## Not read (%d)" % len(problems))
+        for f, why in problems:
+            print("  %s: %s" % (f, why))
+    print("\nA high score means a similar spectral shape, not a confirmed identification.")
 
 
 def main():
@@ -160,6 +206,9 @@ def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     std = load_standards(a.db)
+    if os.path.isdir(a.file):
+        run_folder(a.file, std, a.from_transmittance, a.top if a.top != 5 else 3)
+        return
     x, y = read_spectrum(a.file, a.from_transmittance)
     print("File: %s  (%d points, %.0f to %.0f cm-1)" % (os.path.basename(a.file), len(x), x.min(), x.max()))
     print("Standards compared: %d ER-IR scans" % len(std))
