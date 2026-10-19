@@ -1,40 +1,41 @@
 # Import report
 
-Saved. **256 scans added**, 0 skipped because they were already in the database. The database now holds **256 measurements**, 220 of them linked to an ATR standard.
+Saved. **55 scans added**, 252 skipped because they were already in the database. The database now holds **307 measurements**, 266 of them linked to an ATR standard.
 
 Foreign-key check: no problems
 
 ## Added in this run
 
-- Aragonite, ATR: 1
-- Aragonite, ER-IR: 18
-- Azurite, ATR: 1
-- Azurite, ER-IR: 22
-- Calcite, ATR: 1
-- Calcite, ER-IR: 21
-- Cerussite, ATR: 1
-- Cerussite, ER-IR: 20
-- Cinnabar, ATR: 1
-- Cinnabar, ER-IR: 11
-- Dolomite, ATR: 1
-- Dolomite, ER-IR: 19
-- Goethite, ATR: 1
-- Goethite, ER-IR: 19
-- Hematite, ATR: 1
-- Hematite, ER-IR: 15
-- Lazurite, ATR: 1
-- Lazurite, ER-IR: 13
-- Magnetite, ER-IR: 22
-- Malachite, ATR: 1
-- Malachite, ER-IR: 10
-- Orpiment, ATR: 1
-- Orpiment, ER-IR: 20
+- Lead white, ATR: 1
+- Lead white, ER-IR: 9
+- Lead-tin yellow dark, ATR: 1
+- Lead-tin yellow dark, ER-IR: 10
+- Lead-tin yellow light, ATR: 1
+- Lead-tin yellow light, ER-IR: 10
+- Minium, ATR: 1
+- Minium, ER-IR: 9
 - Synthetic malachite, ATR: 1
-- Synthetic malachite, ER-IR: 12
 - Synthetic ultramarine, ATR: 1
-- Synthetic ultramarine, ER-IR: 10
 - Verdigris, ATR: 1
-- Verdigris, ER-IR: 10
+- Vermilion, ATR: 1
+- Vermilion, ER-IR: 9
+- 32 earlier ER-IR scans were linked to an ATR standard that is now available.
+
+## Converted to absorbance (0)
+
+(none)
+
+## Skipped: could not be converted (0)
+
+(none)
+
+## Scans added without a date (0)
+
+(none)
+
+## Scans added without an operator (0)
+
+(none)
 
 ## Database totals per material
 
@@ -47,41 +48,52 @@ Foreign-key check: no problems
 | Cinnabar | 11 | 1 | 3 |
 | Dolomite | 19 | 1 | 3 |
 | Goethite | 19 | 1 | 3 |
-| Hematite | 15 | 1 | 3 |
+| Hematite | 14 | 1 | 3 |
 | Lazurite | 13 | 1 | 3 |
+| Lead white | 9 | 1 | 1 |
+| Lead-tin yellow dark | 10 | 1 | 1 |
+| Lead-tin yellow light | 10 | 1 | 1 |
 | Magnetite | 22 | 0 | 2 |
 | Malachite | 10 | 1 | 2 |
+| Minium | 9 | 1 | 1 |
 | Orpiment | 20 | 1 | 3 |
 | Synthetic malachite | 12 | 1 | 1 |
 | Synthetic ultramarine | 10 | 1 | 1 |
 | Verdigris | 10 | 1 | 1 |
+| Vermilion | 9 | 1 | 1 |
 
 ## Skipped: empty or unreadable (0)
 
 (none)
 
-## Removed as duplicates (0)
+## Removed as duplicates (20)
 
-(none)
-
-## Not used on purpose (0)
-
-(none)
+- `14-10-2026/synth_ultramarine_ER_IR_1.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_ultramarine_ER_IR_10.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_ultramarine_ER_IR_2.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_ultramarine_ER_IR_3.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_ultramarine_ER_IR_4.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_ultramarine_ER_IR_5.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_ultramarine_ER_IR_6.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_ultramarine_ER_IR_7.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_ultramarine_ER_IR_8.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_ultramarine_ER_IR_9.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_0.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_1.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_2.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_3.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_4.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_5.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_6.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_7.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_8.dpt` is identical to `a scan already in the database`
+- `14-10-2026/synth_verdigris_ER_IR_9.dpt` is identical to `a scan already in the database`
 
 ## Files whose name matched no rule, not loaded (0)
 
 (none)
 
-## Filename typos corrected (6)
-
-- `DolemitePowder.0.dpt` read as `dolomitepowder.0`
-- `LasuriteFrag1_p1.0.dpt` read as `lazuritefrag1_p1.0`
-- `cinnabr1.3.dpt` read as `cinnabar1.3`
-- `dolomiter_ER_9.0.dpt` read as `dolomite_er_9.0`
-- `hematitie1.3.dpt` read as `hematite1.3`
-- `verdigirs_ER_2.0.dpt` read as `verdigris_er_2.0`
-
 ## Things to check
 
 - Materials with ER-IR scans but no ATR standard (tagged `needs-atr-recollection`): Magnetite
-- Spectra are loaded exactly as in the files and never converted.
+- Spectra are loaded exactly as in the files, except those listed under "Converted to absorbance" above.
