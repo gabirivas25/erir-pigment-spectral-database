@@ -292,7 +292,25 @@ The program skips any file whose path is already in the database, so a corrected
 7. Replace the file in the `scans` folder with the corrected one, keeping the same name.
 8. Run the program (dry run first, then for real), then commit and push in GitHub Desktop.
 
-Do not delete an ATR standard this way while ER-IR scans point to it.
+Do not delete an ATR standard this way while ER-IR scans point to it. To replace an ATR standard that was scanned badly (for example without an automatic background), use the steps below instead.
+
+### Replacing an ATR standard
+
+The ER-IR scans must be unlinked first, then the old ATR is removed, then the new ATR is loaded and the program links every ER-IR scan to it.
+
+1. Find the old ATR's `MeasurementID` in the **Execute SQL** tab:
+   ```sql
+   SELECT MeasurementID, FilePath FROM SpectralFile WHERE FilePath LIKE '%ultramarine_ATR%';
+   ```
+2. Run these three lines, changing the number 13 to that `MeasurementID` in all three:
+   ```sql
+   UPDATE Measurement SET ReferenceMeasurementID = NULL WHERE ReferenceMeasurementID = 13;
+   DELETE FROM SpectralFile WHERE MeasurementID = 13;
+   DELETE FROM Measurement WHERE MeasurementID = 13;
+   ```
+3. Click **Write Changes**, then close DB Browser.
+4. Move the old ATR file out of `scans` into `Archived/removed_scans` (otherwise the program loads it again).
+5. Put the new ATR file in its new dated folder, add the folder's line to `scan_batches.csv`, and run the program. The report says how many earlier ER-IR scans were linked to the new standard.
 
 ## Workflow 5: A new person is doing the scans
 
