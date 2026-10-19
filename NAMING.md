@@ -31,12 +31,13 @@ How to read them:
 ### The rules
 
 1. **Every ATR file has `ATR` in its name.** Every ER-IR file has `ER_IR` in its name. This way the two can never be confused.
-2. **Use underscores** between the parts, never spaces, dashes or dots (the only dot is the one before `dpt`).
+2. **Use underscores** between the parts, never spaces, dashes or dots (the only dot is the one before `dpt`; a `.0` that OPUS adds is ignored, see rule 8).
 3. **`mineralname` and `pigmentname` are the `file_key` of the material** in `materials.csv` (see section 3). `hematite` and `synth_verdigris` are file keys. A powdered pigment's key always starts with `synth_`.
 4. **Write `ER_IR` and `ATR` in capitals, the material in lower case.** The program ignores capitals, but one style keeps the folder easy to read.
 5. **Minerals have a specimen number, powdered pigments do not.** A mineral can have several pieces (specimens). A powdered pigment is one jar, so it only has a scan number.
 6. **A mineral has one ATR standard**, so its ATR file has no numbers.
-7. **The file type is `.dpt`**, exported from OPUS as **absorbance**. If a batch was exported as transmittance or reflectance by mistake, you can still load it: mark its line in `scan_batches.csv` with the unit (see WORKFLOW.md, part 5, "A file is not in absorbance").
+7. **The file type is `.dpt`**, exported from OPUS as **absorbance**.
+8. **A number OPUS adds at the end is fine.** OPUS often exports a file as `hematite_ATR.0.dpt` or `synth_lead_white_ER_IR_3.0.dpt`. The program ignores the `.0` (or `.1`), so you do not have to rename those files. Do not put other dots in the name. If a batch was exported as transmittance or reflectance by mistake, you can still load it: mark its line in `scan_batches.csv` with the unit (see WORKFLOW.md, part 5, "A file is not in absorbance").
 
 ### What "specimen" and "scan number" mean
 

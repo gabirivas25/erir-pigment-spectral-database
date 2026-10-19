@@ -37,7 +37,8 @@ untouched, and the measurement's Notes say that it was converted. A batch with a
 to be absorbance, and the program stops if a scan in it looks like %T.
 The whole run is one transaction: if anything fails, nothing is saved.
 
-FILENAME RULES  (the key is the file_key column of materials.csv; capitals do not matter)
+FILENAME RULES  (the key is the file_key column of materials.csv; capitals do not matter;
+                 a number OPUS adds before ".dpt", as in hematite_ATR.0.dpt, is ignored)
     ER-IR, mineral              <key>_ER_IR_<specimen>_<scan>.dpt     e.g. hematite_ER_IR_2_16.dpt
     ATR standard, mineral       <key>_ATR.dpt                          e.g. hematite_ATR.dpt
     ER-IR, synthetic pigment    <synth_key>_ER_IR_<scan>.dpt           e.g. synth_verdigris_ER_IR_3.dpt
@@ -219,6 +220,7 @@ def classify(rel, mats):
     """Describe a file from its name, or return None if no rule matches."""
     base = os.path.basename(rel)
     name = (base[:-4] if base.lower().endswith(".dpt") else base).lower().replace(" ", "")
+    name = re.sub(r"\.\d+$", "", name)            # OPUS adds ".0" (or ".1") to its exports: ignore it
     natural = [k for k, v in mats.items() if not v["is_synthetic"]]
     synth = [k for k, v in mats.items() if v["is_synthetic"]]
     if natural:
