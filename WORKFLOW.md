@@ -355,7 +355,7 @@ Rules for all sheets:
 - No empty lines in the middle.
 - A value that contains a comma must be inside double quotes, for example `"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2"`.
 - Dates are always day-month-year with dashes: `05-11-2026`. The database stores them internally as `2026-11-05`; you never type that form.
-- In `scan_batches.csv`, the columns are `path_prefix,date,operator,intensity`. The first column is a folder name **ending with a slash**. Leave `intensity` blank for absorbance, which is the normal case. Fill it in only for a batch exported as transmittance or reflectance (see **A file is not in absorbance**). The longest matching folder wins, so a line for `carbonates/powder_dolomite/` overrides the line for `carbonates/`.
+- In `scan_batches.csv`, the columns are `path_prefix,date,operator,intensity`. The first column is a folder name **ending with a slash**, or a single file. Leave `intensity` blank for absorbance, which is the normal case. Fill it in only for a batch exported as transmittance or reflectance (see **A file is not in absorbance**). The longest matching folder wins, so a line for `carbonates/powder_dolomite/` overrides the line for `carbonates/`.
 - The operator name in `scan_batches.csv` must be spelled exactly as in `operators.csv`.
 - In `operators.csv`, the columns are `name,email,institution`.
 
@@ -441,7 +441,15 @@ The database holds absorbance only. A .dpt file has no unit label, so the progra
 | `reflectance_percent` | %R, 0 to 100 | A = 2 - log10(%R) |
 | `reflectance` | R, 0 to 1 | A = -log10(R) |
 
-The program converts each point while loading and stores the absorbance. The original file is not changed. The measurement's Notes say, for example, "Converted to absorbance by import_scans.py from %T (A = 2 - log10(%T))". The report lists the converted files under "Converted to absorbance". A file with a value of zero or less cannot be converted: the program skips it and lists it.
+The program converts each point while loading and stores the absorbance. The original file is not changed. The measurement's Notes say, for example, "Converted to absorbance by import_scans.py from %T (A = 2 - log10(%T))". The report lists the converted files under "Converted to absorbance". Values of zero or less (detector noise on a dark sample) cannot be log-transformed: they are set to 0.0001 first and counted in the Notes. A file where more than 5% of the values are zero or less is not converted; the program lists it under "Not converted".
+
+**One file inside a folder.** The first column of `scan_batches.csv` can also be a single file, because the longest match wins. This marks one reflectance file in a folder of absorbance files:
+
+```
+carbonates/calcite_ER_IR_1_2.dpt,23-04-2026,Maria Gabriela Rivas Carmona,reflectance
+```
+
+**A file already in the database.** If a scan was loaded before its line was marked, mark it and run the program again. It converts the stored spectrum in place, once, and lists it under "Already in the database, converted to absorbance now". It does not convert a scan whose Notes already say it was converted.
 
 **Limits to know:**
 - The program cannot tell a 0 to 1 transmittance file from absorbance, because the numbers look alike. For fractions you must always write the unit.
