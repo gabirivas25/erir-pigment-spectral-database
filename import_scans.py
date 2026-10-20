@@ -32,7 +32,10 @@ WHAT IT DOES
 
 It never modifies the scans. Spectra are loaded as they are in the file, with one exception: a batch marked
 in the `intensity` column of scan_batches.csv as transmittance or reflectance is converted to absorbance while
-loading (A = 2 - log10(%T), or A = -log10(T) for fractions; the same for reflectance). The original file is
+loading (A = 2 - log10(%T), or A = -log10(T) for fractions; the same for reflectance). Values at or below zero
+(detector noise) are set to 1e-4 first and counted in the Notes; a scan with more than 5% such values is not
+converted. A path in scan_batches.csv can be a single file, so one scan in a folder can be marked. A scan already
+in the database whose batch is marked later is converted in place on the next run. The original file is
 untouched, and the measurement's Notes say that it was converted. A batch with a blank `intensity` is taken
 to be absorbance, and the program stops if a scan in it looks like %T.
 The whole run is one transaction: if anything fails, nothing is saved.
@@ -81,17 +84,33 @@ VALID_UNITS = ["absorbance"] + list(CONVERT_UNITS)
 # ---------------------------------------------------------------------------
 
 
+FLOOR = 1e-4          # T or R values at or below zero (detector noise) are set to this before the log
+MAX_FLOORED = 0.05    # more than this share of such values: the scan is not converted
+
+
 def to_absorbance(pts, unit):
-    """Convert [(wavenumber, T or R)] to absorbance, or return None if a value is zero or negative."""
+    """Convert [(wavenumber, T or R)] to absorbance. Returns (points, number of values set to FLOOR),
+    or None if more than MAX_FLOORED of the values are zero or negative."""
     import math
     percent = CONVERT_UNITS[unit][0]
-    out = []
+    out, floored = [], 0
     for x, y in pts:
         v = y / 100.0 if percent else y
         if v <= 0:
-            return None
+            v, floored = FLOOR, floored + 1
         out.append((x, -math.log10(v)))
-    return out
+    if floored > MAX_FLOORED * len(pts):
+        return None
+    return out, floored
+
+
+def conversion_note(unit, floored):
+    percent, label = CONVERT_UNITS[unit]
+    note = "Converted to absorbance by import_scans.py from %s (A = %s)" % (
+        label, "2 - log10(%s)" % label if percent else "-log10(%s)" % label)
+    if floored:
+        note += "; %d values at or below zero set to %g first" % (floored, FLOOR)
+    return note
 
 
 def looks_like_percent(pts):
@@ -351,15 +370,16 @@ def main():
     # ---- what is already in the database ----
     key_of_name = {v["material_name"]: k for k, v in mats.items()}
     mat_id, spec_id, atr_meas = {}, {}, {}
-    have_paths, have_hashes = set(), set()
+    have_paths, have_hashes, have_meas = set(), set(), {}
     for name, mid in cur.execute("SELECT MaterialName, MaterialID FROM Material"):
         if name in key_of_name:
             mat_id[key_of_name[name]] = mid
-    for mid, mode, sid, path, js in cur.execute(
-            "SELECT m.MeasurementID, am.ModeName, m.SpecimenID, f.FilePath, m.SpectrumData FROM Measurement m "
+    for mid, mode, sid, path, js, notes in cur.execute(
+            "SELECT m.MeasurementID, am.ModeName, m.SpecimenID, f.FilePath, m.SpectrumData, m.Notes FROM Measurement m "
             "JOIN SpectralFile f USING(MeasurementID) JOIN AcquisitionModeType am USING(AcquisitionModeID) "
             "ORDER BY m.MeasurementID").fetchall():
         have_paths.add(path)
+        have_meas[path] = (mid, notes or "")
         info = classify(path, mats)
         if info is None:
             continue
@@ -382,13 +402,27 @@ def main():
                 unconvertible.append(r["rel"])
                 records.remove(r)
                 continue
-            percent, label = CONVERT_UNITS[unit]
-            r["pts"] = new
-            r["note"] = "Converted to absorbance by import_scans.py from %s (A = %s)" % (
-                label, "2 - log10(%s)" % label if percent else "-log10(%s)" % label)
-            converted.append((r["rel"], label))
+            r["pts"], floored = new
+            r["note"] = conversion_note(unit, floored)
+            converted.append((r["rel"], CONVERT_UNITS[unit][1]))
         elif unit is None and looks_like_percent(r["pts"]):
             suspicious.append(r["rel"])
+    # scans loaded earlier, whose batch has since been marked as T or R: convert them in place, once
+    reconverted = []
+    for r in already:
+        unit = batch_for(r["path"], batches)[2]
+        mid, notes = have_meas[r["path"]]
+        if unit not in CONVERT_UNITS or notes.startswith("Converted to absorbance"):
+            continue
+        new = to_absorbance(r["pts"], unit)
+        if new is None:
+            unconvertible.append(r["rel"])
+            continue
+        pts, floored = new
+        cur.execute("UPDATE Measurement SET SpectrumData=?, Notes=? WHERE MeasurementID=?",
+                    (json.dumps([[x, y] for x, y in pts], separators=(",", ":")),
+                     conversion_note(unit, floored) + ("; " + notes if notes else ""), mid))
+        reconverted.append((r["rel"], CONVERT_UNITS[unit][1]))
     if suspicious:
         con.rollback()
         sys.exit("Nothing was saved. These scans look like %T or %R, not absorbance (their largest value is between 15 and 120):\n  "
@@ -514,8 +548,11 @@ def main():
         L.append("- %d earlier ER-IR scans were linked to an ATR standard that is now available." % relinked)
     L.append("\n## Converted to absorbance (%d)\n" % len(converted))
     L += ["- `%s` (from %s)" % x for x in sorted(converted)] or ["(none)"]
-    L.append("\n## Skipped: could not be converted (%d)\n" % len(unconvertible))
-    L += ["- `%s` (a value of zero or less cannot be converted)" % x for x in sorted(unconvertible)] or ["(none)"]
+    L.append("\n## Already in the database, converted to absorbance now (%d)\n" % len(reconverted))
+    L += ["- `%s` (from %s)" % x for x in sorted(reconverted)] or ["(none)"]
+    L.append("\n## Not converted (%d)\n" % len(unconvertible))
+    L += ["- `%s` (more than %d%% of its values are zero or less)" % (x, MAX_FLOORED * 100)
+          for x in sorted(unconvertible)] or ["(none)"]
     L.append("\n## Scans added without a date (%d)\n" % len(undated))
     L += ["- `%s`" % x for x in sorted(undated)] or ["(none)"]
     if undated:
