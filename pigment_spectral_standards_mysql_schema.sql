@@ -94,6 +94,7 @@ CREATE TABLE Material (
     ChemicalFormula VARCHAR(255),      -- plain text, e.g. 'CaCO3'
     IsSynthetic TINYINT(1),            -- 1 = synthetic, 0 = natural, NULL = not stated
     Description TEXT,
+    ChemicalClass VARCHAR(100),        -- optional, e.g. 'Carbonate', 'Oxide', 'Sulfide', 'Silicate', 'Acetate'
     CHECK (IsSynthetic IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

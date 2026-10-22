@@ -414,8 +414,9 @@ def main():
     def material(key):
         if key not in mat_id:
             m = mats[key]
-            cur.execute("INSERT INTO Material(MaterialName,ChemicalFormula,IsSynthetic,Description) VALUES (?,?,?,?)",
-                        (m["material_name"], m["chemical_formula"], m["is_synthetic"], m["description"]))
+            cur.execute("INSERT INTO Material(MaterialName,ChemicalFormula,IsSynthetic,Description,ChemicalClass) VALUES (?,?,?,?,?)",
+                        (m["material_name"], m["chemical_formula"], m["is_synthetic"], m["description"],
+                         m.get("chemical_class")))
             mat_id[key] = cur.lastrowid
         return mat_id[key]
 

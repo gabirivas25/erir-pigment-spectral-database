@@ -12,12 +12,14 @@
 --   RENAMED   LocationType -> MeasurementSiteType.
 --   ADDED     Source (who supplied a specimen), SpecimenType (pick list),
 --             Identification (links a specimen to a material it matched).
---   ADDED     Material.IsSynthetic; Object.Origin, ObjectDate,
+--   ADDED     Material.IsSynthetic and Material.ChemicalClass (optional text,
+--             replaces the MineralClass table); Object.Origin, ObjectDate,
 --             ProvenanceNotes, CurrentAddress, Notes; Collection.Notes;
 --             InstrumentConfiguration.Notes; ImageReference columns;
 --             Measurement spot description fields.
 --   REMOVED   Spectrum, SpectralDataPoint, PostProcessing,
---             MeasurementLocation, MineralClass.
+--             MeasurementLocation, MineralClass (the table; its job is now
+--             done by the optional column Material.ChemicalClass).
 --   REMOVED   Institution.Location, Collection.Location.
 --   REMOVED   EnvironmentConditions and Measurement.ConditionID (never used).
 --   CHANGED   SpectralFile: now one required .dpt file per measurement;
@@ -105,7 +107,8 @@ CREATE TABLE Material (
     ChemicalFormula TEXT,              -- plain text, e.g. 'CaCO3'
     IsSynthetic INTEGER                -- 1 = synthetic, 0 = natural, NULL = not stated
         CHECK (IsSynthetic IN (0, 1)),
-    Description TEXT
+    Description TEXT,
+    ChemicalClass TEXT                 -- optional, e.g. 'Carbonate', 'Oxide', 'Sulfide', 'Silicate', 'Acetate'
 );
 
 CREATE TABLE Source (

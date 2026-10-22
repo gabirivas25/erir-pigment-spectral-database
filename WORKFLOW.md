@@ -192,10 +192,11 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
    | `specimen_type` | Exactly one of: `powder pigment`, `ground mineral`, `mineral fragment` | `ground mineral` |
    | `preparation_notes` | For example `Ground/prepared for FTIR analysis`, or empty | `Ground/prepared for FTIR analysis` |
    | `source_notes` | Product number or label text, or empty | |
+   | `chemical_class` | The chemical class: `Carbonate`, `Oxide`, `Sulfide`, `Silicate` or `Acetate`, or empty | `Sulfide` |
 
-   The whole line for realgar (commas between the columns, and an empty last column after the final comma):
+   The whole line for realgar (commas between the columns; `source_notes` is empty, so two commas sit side by side):
    ```
-   realgar,Realgar,As4S4,0,Arsenic sulfide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,
+   realgar,Realgar,As4S4,0,Arsenic sulfide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,,Sulfide
    ```
    A value that contains a comma must be inside double quotes, for example `"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2"`.
 4. Save the file (**File, then Save**). If a window asks about the format, keep **plain text / CSV**.
@@ -495,7 +496,7 @@ The naming rules treat powders as synthetic pigments, so they do not cover this 
 | Source or product notes of a specimen | `Specimen`, `SourceNotes` | Free text, for example the label text |
 | Preparation | `Specimen`, `PreparationNotes` | Free text |
 | Specimen type | `Specimen`, `SpecimenTypeID` | `1` powder pigment, `2` ground mineral, `3` mineral fragment |
-| Description or formula of a material | `Material`, `Description`, `ChemicalFormula` | Free text |
+| Description, formula or class of a material | `Material`, `Description`, `ChemicalFormula`, `ChemicalClass` | Free text |
 
 **For a whole folder at once:** in the **Execute SQL** tab, change the folder name, date and operator number in this example, then run it and click **Write Changes**:
 ```sql
