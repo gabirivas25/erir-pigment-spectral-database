@@ -10,7 +10,7 @@ Run it after every import (see WORKFLOW.md), then republish the UI.
 It only reads the database. It never changes it.
 
 Files written to OUTPUT_FOLDER:
-    materials.json      one entry per material (name, formula, source, colour, scan counts)
+    materials.json      one entry per material (name, formula, chemical class, source, colour, scan counts)
     scans.json          one entry per scan (metadata only, no spectrum)
     match_index.json    every ER-IR spectrum resampled to one common wavenumber grid, for matching
     spectra_er_ir.json  the full spectra of all ER-IR scans (see format below)
@@ -36,7 +36,9 @@ COLORS = {
     "goethite": "#E8821E", "hematite": "#756F6A", "lazurite": "#3a2d9a",
     "magnetite": "#3a3a3a", "malachite": "#17704A", "orpiment": "#e0a800",
     "synth_malachite": "#9FE0C0", "synth_ultramarine": "#5b4bd6",
-    "synth_verdigris": "#2aa198",
+    "synth_verdigris": "#2aa198", "synth_lead_white": "#e8e4d8", "synth_minium": "#d9442b",
+    "synth_vermilion": "#c8321f", "synth_lead_tin_yellow_light": "#f2d24b",
+    "synth_lead_tin_yellow_dark": "#d9a521",
 }
 FALLBACK_COLOR = "#8a8f94"
 
@@ -77,7 +79,7 @@ def main():
     rows = con.execute("""
         SELECT m.MeasurementID, m.SpectrumData, m.ScanDate, m.ReferenceMeasurementID,
                m.IntensityMode, amt.ModeName AS Mode, f.FilePath,
-               op.Name AS Operator, mat.MaterialName, mat.ChemicalFormula, mat.IsSynthetic,
+               op.Name AS Operator, mat.MaterialName, mat.ChemicalFormula, mat.ChemicalClass, mat.IsSynthetic,
                mat.Description, src.SourceName,
                ic.Resolution, ic.NumberOfScans, ic.BeamSplitterType, ic.ApertureSize, ic.Notes AS ConfigNotes,
                ins.InstrumentName, ins.Model, ins.Manufacturer, st.TypeName AS SiteName
@@ -147,7 +149,7 @@ def main():
         })
 
         m = materials.setdefault(key, {
-            "id": key, "name": r["MaterialName"], "formula": r["ChemicalFormula"],
+            "id": key, "name": r["MaterialName"], "formula": r["ChemicalFormula"], "chemicalClass": r["ChemicalClass"],
             "isSynthetic": bool(r["IsSynthetic"]), "description": r["Description"],
             "source": r["SourceName"], "color": COLORS.get(key, FALLBACK_COLOR),
             "erIrCount": 0, "atrCount": 0,
