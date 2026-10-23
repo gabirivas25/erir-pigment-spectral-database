@@ -27,7 +27,7 @@ The program needs four things, all in this repository:
 | Source, specimen type, specimen notes | `materials.csv` |
 | Scan date (`ScanDate`) | `scan_batches.csv`, by the folder the scan is in |
 | Operator | `scan_batches.csv`, by the folder the scan is in. The person must be in `operators.csv` |
-| Instrument (Bruker LUMOS II), scan settings (ER-IR: 4 cm-1, 64 scans, ZnSe, 30 um aperture; ATR: 4 cm-1, 32 scans, ZnSe), site (Laboratory), intensity mode (Absorbance) | Fixed in the program: the standard setup, the same for every operator |
+| Instrument (Bruker LUMOS II), scan settings (ER-IR: 4 cm-1, 64 scans, ZnSe, 30 um aperture; ATR: 4 cm-1, 32 scans, ZnSe), site (Laboratory), intensity mode (Absorbance) | Fixed in the program: the standard setup, the same for every operator. If some scans used other settings, see **A scan used different settings from the standard** |
 | Notes, coordinates, images | Not filled in. Type them into the database by hand if you want them (see **Finding and editing one scan by hand**) |
 
 ---
@@ -514,6 +514,40 @@ Keep the `%` signs before and after the name. They mean "anything here", so the 
 **Filters stay on.** A filter keeps filtering until you delete its text, and several filters work together: a row must match all of them. If rows seem to be missing, clear every filter box in the table first, including the ones to the right.
 
 Before you run the program again, close DB Browser. Afterwards, commit and push the database file in GitHub Desktop, so the typed values are not lost. Do not edit `SpectrumData`, `FilePath`, `Checksum` or `ReferenceMeasurementID` by hand.
+
+## A scan used different settings from the standard
+
+The program gives every ER-IR scan the standard settings (4 cm-1, 64 scans) and every ATR scan the standard settings (4 cm-1, 32 scans). If some scans were taken with other settings, for example a different number of scans, add the settings once and point those scans to them. Load the scans first with the program, then follow these steps.
+
+**Step 1: Add the settings.**
+1. Open `pigment_spectral_standards.db` in DB Browser and click the **Browse Data** tab.
+2. In the **Table** menu, choose **InstrumentConfiguration**. You see the standard rows: one for ER-IR and one for ATR. Note the number of the row that is closest to what you used.
+3. Click the **New Record** button above the table. Fill in the new row:
+   - `InstrumentID`: required. Use `1` for the LUMOS II. The numbers are in the **Instrument** table.
+   - `Resolution` and `NumberOfScans`: the values you used, for example `4 cm-1` and `32`.
+   - `BeamSplitterType` and `ApertureSize`: the same as the standard row, unless they also changed.
+   - `Notes`: anything unusual, for example `Positioning speed: medium. Pressure: low.`
+4. Read the new row's number in the **InstrumentConfigurationID** column. You need it in the next step.
+
+**Step 2: Point the scans to the new settings.**
+
+*For one scan.* Find its `MeasurementID` (see **Finding and editing one scan by hand**). In the **Measurement** table, double-click the `InstrumentConfigurationID` cell and type the new number. Click **Apply** in the **Edit Database Cell** pane.
+
+*For a whole folder.* Click the **Execute SQL** tab. First check which scans a name matches. Change the folder name:
+```sql
+SELECT m.MeasurementID, f.FilePath
+FROM Measurement m JOIN SpectralFile f ON f.MeasurementID = m.MeasurementID
+WHERE f.FilePath LIKE '%my_folder_name%';
+```
+If the list is exactly the scans you want, run this. Change `3` to the new row's number, and use the same folder name:
+```sql
+UPDATE Measurement SET InstrumentConfigurationID = 3
+WHERE MeasurementID IN (SELECT MeasurementID FROM SpectralFile WHERE FilePath LIKE '%my_folder_name%');
+```
+
+**Step 3: Save.** Click **Write Changes** (Command+S, or Ctrl+S on Windows). To throw the change away instead, click **Revert Changes**. Close DB Browser before you run the program again. Then commit and push the database file in GitHub Desktop.
+
+A new settings row is only needed once. Later scans with the same settings point to the same row.
 
 ## The date, operator or other information is missing or wrong on scans already loaded
 
