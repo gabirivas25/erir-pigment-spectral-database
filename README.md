@@ -78,7 +78,7 @@ The database holds absorbance data only. Spectra are exported as absorbance from
 
 | Table | Purpose |
 |---|---|
-| `Material` | A pigment or mineral: name, chemical formula, whether it is synthetic |
+| `Material` | A pigment or mineral: name, chemical formula, whether it is synthetic (Y or N) |
 | `Source` | Who supplied a specimen, for example a collection or a commercial supplier |
 | `Specimen` | The physical item that was measured: a powder, a ground mineral or a fragment |
 | `Measurement` | One scan, with its spectrum, mode (ER-IR or ATR) and, for an ER-IR scan, the link to its ATR standard |

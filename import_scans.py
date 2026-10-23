@@ -120,10 +120,10 @@ def load_materials(path):
                 sys.exit("materials.csv: file_key '%s' appears twice" % key)
             if not r["material_name"].strip():
                 sys.exit("materials.csv: row '%s' has no material_name" % key)
-            if r["is_synthetic"].strip() not in ("0", "1"):
-                sys.exit("materials.csv: row '%s': is_synthetic must be 0 or 1" % key)
+            if r["is_synthetic"].strip().upper() not in ("Y", "N"):
+                sys.exit("materials.csv: row '%s': is_synthetic must be Y or N" % key)
             rows[key] = {k: (v.strip() if v and v.strip() else None) for k, v in r.items()}
-            rows[key]["is_synthetic"] = int(r["is_synthetic"])
+            rows[key]["is_synthetic"] = r["is_synthetic"].strip().upper() == "Y"   # True = synthetic
     return rows
 
 
@@ -415,7 +415,7 @@ def main():
         if key not in mat_id:
             m = mats[key]
             cur.execute("INSERT INTO Material(MaterialName,ChemicalFormula,IsSynthetic,Description,ChemicalClass) VALUES (?,?,?,?,?)",
-                        (m["material_name"], m["chemical_formula"], m["is_synthetic"], m["description"],
+                        (m["material_name"], m["chemical_formula"], "Y" if m["is_synthetic"] else "N", m["description"],
                          m.get("chemical_class")))
             mat_id[key] = cur.lastrowid
         return mat_id[key]

@@ -122,7 +122,7 @@ Rules:
 - Lower case, underscores instead of spaces, no other punctuation.
 - The `file_key` must be **exactly** the start of the scan filenames: key `calcite` goes with `calcite_ER_IR_1_0.dpt` and `calcite_ATR.dpt`.
 - A key is used once. Do not change a key that already has scans loaded.
-- For a powdered pigment, `is_synthetic` is `1`. The material name shown in the database does not need the `synth_` prefix (the key `synth_verdigris` has the material name `Verdigris`).
+- For a powdered pigment, `is_synthetic` is `Y`. The material name shown in the database does not need the `synth_` prefix (the key `synth_verdigris` has the material name `Verdigris`).
 
 The full step-by-step for adding a new material is in [`WORKFLOW.md`](WORKFLOW.md), Workflow 2.
 

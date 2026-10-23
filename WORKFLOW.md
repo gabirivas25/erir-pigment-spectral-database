@@ -186,7 +186,7 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
    | `file_key` | The mineral name used at the start of the scan filenames. Lower case, no spaces. For a powdered pigment it must start with `synth_` | `realgar` |
    | `material_name` | The name shown in the database | `Realgar` |
    | `chemical_formula` | Plain text, numbers written inline, no subscripts | `As4S4` |
-   | `is_synthetic` | `1` if synthetic, `0` if natural | `0` |
+   | `is_synthetic` | `Y` if synthetic, `N` if natural | `N` |
    | `description` | A short description, or leave empty | `Arsenic sulfide` |
    | `source` | Who supplied it: `UniPD mineral collection`, `Kremer`, `Maimeri`, or a new name. Empty = not recorded | `UniPD mineral collection` |
    | `specimen_type` | Exactly one of: `powder pigment`, `ground mineral`, `mineral fragment` | `ground mineral` |
@@ -196,7 +196,7 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
 
    The whole line for realgar (commas between the columns; `source_notes` is empty, so two commas sit side by side):
    ```
-   realgar,Realgar,As4S4,0,Arsenic sulfide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,,Sulfide
+   realgar,Realgar,As4S4,N,Arsenic sulfide,UniPD mineral collection,ground mineral,Ground/prepared for FTIR analysis,,Sulfide
    ```
    A value that contains a comma must be inside double quotes, for example `"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2"`.
 4. Save the file (**File, then Save**). If a window asks about the format, keep **plain text / CSV**.
@@ -260,7 +260,7 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
 2. Type a short description in the **Summary** box, for example `Add realgar`.
 3. Click **Commit to main**, then click **Push origin**.
 
-**For a powdered pigment** (synthetic), use `is_synthetic` = `1`, a `file_key` that starts with `synth_` (for example `synth_cinnabar`), and the filenames `synth_cinnabar_ER_IR_1.dpt` and `synth_cinnabar_ATR.dpt`. The ER-IR and ATR scans then share one specimen (one jar of powder).
+**For a powdered pigment** (synthetic), use `is_synthetic` = `Y`, a `file_key` that starts with `synth_` (for example `synth_cinnabar`), and the filenames `synth_cinnabar_ER_IR_1.dpt` and `synth_cinnabar_ATR.dpt`. The ER-IR and ATR scans then share one specimen (one jar of powder).
 
 **If you forget Step 1:** the scans are not loaded, and the report lists them under "Files whose name matched no rule". Nothing is guessed. Do Step 1, then run the command again.
 

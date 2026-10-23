@@ -1,21 +1,21 @@
 file_key,material_name,chemical_formula,is_synthetic,description,source,specimen_type,preparation_notes,source_notes,chemical_class
-aragonite,Aragonite,CaCO3,0,Calcium carbonate polymorph,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
-azurite,Azurite,Cu3(CO3)2(OH)2,0,Basic copper carbonate,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
-calcite,Calcite,CaCO3,0,Calcium carbonate polymorph,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
-cerussite,Cerussite,PbCO3,0,Lead carbonate,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
-cinnabar,Cinnabar,HgS,0,Mercury(II) sulfide,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Sulfide
-dolomite,Dolomite,CaMg(CO3)2,0,Calcium magnesium carbonate,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
-goethite,Goethite,FeO(OH),0,Iron(III) oxide-hydroxide,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Oxide
-hematite,Hematite,Fe2O3,0,Iron(III) oxide,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Oxide
-lazurite,Lazurite,"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2",0,A complex sodalite-group tectosilicate; the main component of lapis lazuli,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Silicate
-magnetite,Magnetite,Fe3O4,0,"Iron(II,III) oxide",UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Oxide
-malachite,Malachite,Cu2CO3(OH)2,0,Basic copper carbonate,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
-orpiment,Orpiment,As2S3,0,Arsenic trisulfide,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Sulfide
-synth_malachite,Synthetic malachite,Cu2CO3(OH)2,1,Chemically identical to natural malachite,Kremer,powder pigment,,"Kremer Pigmente art. 44400, C.I. 77422, CAS 12069-69-1; label: Malachit, synthetisch",Carbonate
-synth_ultramarine,Synthetic ultramarine,Na6-10Al6Si6O24S2-4,1,An idealized or simplified manufactured formula is often written as Na8Al6Si6O24S3,Maimeri,powder pigment,,"Maimeri art. 3517392, no. 392, PB29; label: Ultramarine Deep (Blu oltremare scuro)",Silicate
-synth_verdigris,Verdigris,Cu(CH3COO)2·[Cu(OH)2]3·2H2O,1,Basic copper acetate,Kremer,powder pigment,,"Kremer Pigmente; label: Grünspan, synthetisch; C.I. PG 20.77408",Acetate
-synth_lead_white,Lead white,PbCO3,1,"Lead carbonate, synthetic (cerussite)",Kremer,powder pigment,,Kremer Pigmente; label: Kremserweiß; C.I. PW 1.77596,Carbonate
-synth_minium,Minium,Pb3O4,1,"Red lead, lead(II,IV) oxide",Kremer,powder pigment,,Kremer Pigmente; label: Mennige; C.I. PR 105.77578,Oxide
-synth_vermilion,Vermilion,HgS,1,Mercury sulphide,Zecchi,powder pigment,,Zecchi; product: Vermilion genuine deep,Sulfide
-synth_lead_tin_yellow_light,Lead-tin yellow light,Pb2SnO4,1,Lead stannate,Kremer,powder pigment,,Kremer Pigmente; lead-tin yellow light; C.I. 77629,Oxide
-synth_lead_tin_yellow_dark,Lead-tin yellow dark,Pb2SnO4,1,Lead stannate,Kremer,powder pigment,,Kremer Pigmente; lead-tin yellow dark; C.I. 77629,Oxide
+aragonite,Aragonite,CaCO3,N,Calcium carbonate polymorph,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
+azurite,Azurite,Cu3(CO3)2(OH)2,N,Basic copper carbonate,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
+calcite,Calcite,CaCO3,N,Calcium carbonate polymorph,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
+cerussite,Cerussite,PbCO3,N,Lead carbonate,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
+cinnabar,Cinnabar,HgS,N,Mercury(II) sulfide,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Sulfide
+dolomite,Dolomite,CaMg(CO3)2,N,Calcium magnesium carbonate,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
+goethite,Goethite,FeO(OH),N,Iron(III) oxide-hydroxide,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Oxide
+hematite,Hematite,Fe2O3,N,Iron(III) oxide,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Oxide
+lazurite,Lazurite,"(Na,Ca)8(AlSiO4)6(SO4,S,Cl)2",N,A complex sodalite-group tectosilicate; the main component of lapis lazuli,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Silicate
+magnetite,Magnetite,Fe3O4,N,"Iron(II,III) oxide",UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Oxide
+malachite,Malachite,Cu2CO3(OH)2,N,Basic copper carbonate,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Carbonate
+orpiment,Orpiment,As2S3,N,Arsenic trisulfide,UniPD mineral collection,mineral fragment,Intact natural specimen measured without preparation,,Sulfide
+synth_malachite,Synthetic malachite,Cu2CO3(OH)2,Y,Chemically identical to natural malachite,Kremer,powder pigment,,"Kremer Pigmente art. 44400, C.I. 77422, CAS 12069-69-1; label: Malachit, synthetisch",Carbonate
+synth_ultramarine,Synthetic ultramarine,Na6-10Al6Si6O24S2-4,Y,An idealized or simplified manufactured formula is often written as Na8Al6Si6O24S3,Maimeri,powder pigment,,"Maimeri art. 3517392, no. 392, PB29; label: Ultramarine Deep (Blu oltremare scuro)",Silicate
+synth_verdigris,Verdigris,Cu(CH3COO)2·[Cu(OH)2]3·2H2O,Y,Basic copper acetate,Kremer,powder pigment,,"Kremer Pigmente; label: Grünspan, synthetisch; C.I. PG 20.77408",Acetate
+synth_lead_white,Lead white,PbCO3,Y,"Lead carbonate, synthetic (cerussite)",Kremer,powder pigment,,Kremer Pigmente; label: Kremserweiß; C.I. PW 1.77596,Carbonate
+synth_minium,Minium,Pb3O4,Y,"Red lead, lead(II,IV) oxide",Kremer,powder pigment,,Kremer Pigmente; label: Mennige; C.I. PR 105.77578,Oxide
+synth_vermilion,Vermilion,HgS,Y,Mercury sulphide,Zecchi,powder pigment,,Zecchi; product: Vermilion genuine deep,Sulfide
+synth_lead_tin_yellow_light,Lead-tin yellow light,Pb2SnO4,Y,Lead stannate,Kremer,powder pigment,,Kremer Pigmente; lead-tin yellow light; C.I. 77629,Oxide
+synth_lead_tin_yellow_dark,Lead-tin yellow dark,Pb2SnO4,Y,Lead stannate,Kremer,powder pigment,,Kremer Pigmente; lead-tin yellow dark; C.I. 77629,Oxide

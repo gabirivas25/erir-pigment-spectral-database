@@ -12,7 +12,7 @@
 --   RENAMED   LocationType -> MeasurementSiteType.
 --   ADDED     Source (who supplied a specimen), SpecimenType (pick list),
 --             Identification (links a scan to a material it matched).
---   ADDED     Material.IsSynthetic and Material.ChemicalClass (optional text,
+--   ADDED     Material.IsSynthetic (Y or N) and Material.ChemicalClass (optional text,
 --             replaces the MineralClass table); Object.Origin, ObjectDate,
 --             ProvenanceNotes, CurrentAddress, Notes; Collection.Notes;
 --             InstrumentConfiguration.Notes; ImageReference columns;
@@ -113,8 +113,8 @@ CREATE TABLE Material (
     MaterialID INTEGER PRIMARY KEY AUTOINCREMENT,
     MaterialName TEXT UNIQUE NOT NULL,
     ChemicalFormula TEXT,              -- plain text, e.g. 'CaCO3'
-    IsSynthetic INTEGER                -- 1 = synthetic, 0 = natural, NULL = not stated
-        CHECK (IsSynthetic IN (0, 1)),
+    IsSynthetic TEXT                   -- Y = synthetic, N = natural, empty = not stated
+        CHECK (IsSynthetic IN ('Y', 'N')),
     Description TEXT,
     ChemicalClass TEXT                 -- optional, e.g. 'Carbonate', 'Oxide', 'Sulfide', 'Silicate', 'Acetate'
 );

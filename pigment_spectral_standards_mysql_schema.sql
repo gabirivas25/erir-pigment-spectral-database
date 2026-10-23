@@ -11,7 +11,7 @@
 --     an unlimited TEXT column without a length).
 --   * Measurement.SpectrumData uses the native JSON type, which rejects
 --     invalid JSON by itself.
---   * IsSynthetic is TINYINT(1): 1 = synthetic, 0 = natural, NULL = not stated.
+--   * IsSynthetic is CHAR(1): Y = synthetic, N = natural, NULL = not stated.
 --   * CHECK constraints need MySQL 8.0.16 or later.
 --
 -- A field is required (NOT NULL) only where the field list in the
@@ -92,10 +92,10 @@ CREATE TABLE Material (
     MaterialID INT AUTO_INCREMENT PRIMARY KEY,
     MaterialName VARCHAR(255) NOT NULL UNIQUE,
     ChemicalFormula VARCHAR(255),      -- plain text, e.g. 'CaCO3'
-    IsSynthetic TINYINT(1),            -- 1 = synthetic, 0 = natural, NULL = not stated
+    IsSynthetic CHAR(1),               -- Y = synthetic, N = natural, empty = not stated
     Description TEXT,
     ChemicalClass VARCHAR(100),        -- optional, e.g. 'Carbonate', 'Oxide', 'Sulfide', 'Silicate', 'Acetate'
-    CHECK (IsSynthetic IN (0, 1))
+    CHECK (IsSynthetic IN ('Y', 'N'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE Source (

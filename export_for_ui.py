@@ -150,7 +150,7 @@ def main():
 
         m = materials.setdefault(key, {
             "id": key, "name": r["MaterialName"], "formula": r["ChemicalFormula"], "chemicalClass": r["ChemicalClass"],
-            "isSynthetic": bool(r["IsSynthetic"]), "description": r["Description"],
+            "isSynthetic": r["IsSynthetic"] == "Y", "description": r["Description"],
             "source": r["SourceName"], "color": COLORS.get(key, FALLBACK_COLOR),
             "erIrCount": 0, "atrCount": 0,
         })

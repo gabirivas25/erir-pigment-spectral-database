@@ -14,7 +14,7 @@ con = sqlite3.connect(db)
 print("Materials")
 for name, formula, synth in con.execute(
         "SELECT MaterialName, ChemicalFormula, IsSynthetic FROM Material ORDER BY MaterialName"):
-    print("  %-24s %-34s %s" % (name, formula or "", "synthetic" if synth else "natural"))
+    print("  %-24s %-34s %s" % (name, formula or "", "synthetic" if synth == "Y" else "natural"))
 
 print("\nScans by acquisition mode")
 for mode, n in con.execute(
