@@ -28,7 +28,7 @@ The program needs four things, all in this repository:
 | Scan date (`ScanDate`) | `scan_batches.csv`, by the folder the scan is in |
 | Operator | `scan_batches.csv`, by the folder the scan is in. The person must be in `operators.csv` |
 | Instrument (Bruker LUMOS II), scan settings (ER-IR: 4 cm-1, 64 scans, ZnSe, 30 um aperture; ATR: 4 cm-1, 32 scans, ZnSe), site (Laboratory), intensity mode (Absorbance) | Fixed in the program: the standard setup, the same for every operator |
-| Notes, coordinates, images | Not filled in. Type them into the database by hand if you want them |
+| Notes, coordinates, images | Not filled in. Type them into the database by hand if you want them (see **Finding and editing one scan by hand**) |
 
 ---
 
@@ -482,6 +482,38 @@ A second ATR file is loaded, but the existing links are kept (Workflow 3). Use t
 ## A powdered natural mineral
 
 The naming rules treat powders as synthetic pigments, so they do not cover this case. Precedent in the database: the leftover dolomite powder is recorded as **dolomite specimen 2**, with the ordinary mineral name. Do the same: `mineralname_ER_IR_specimen_scan.dpt`, with the next specimen number. The new specimen takes its type from the material's line in `materials.csv`; to record this specimen as `powder pigment` or `ground mineral`, change it by hand (next section).
+
+## Finding and editing one scan by hand
+
+Use this to type a value into a scan that is already loaded, for example a note, a spot description or an image reference. The `Measurement` table has no file name column, so first find the scan's `MeasurementID`.
+
+**Step 1: Find the MeasurementID.** Use either way.
+
+*Way 1: the SpectralFile table (no SQL).*
+1. Open `pigment_spectral_standards.db` in DB Browser and click the **Browse Data** tab.
+2. In the **Table** menu, choose **SpectralFile**.
+3. Type part of the file name, for example `calcite_ER_IR_1_3`, in the filter box under **FilePath**. One row should remain.
+4. Read the number in the **MeasurementID** column of that row. Do not use the **FileID** column: it is a different number.
+
+*Way 2: one query in Execute SQL.*
+1. Click the **Execute SQL** tab.
+2. Paste this and change the file name:
+   ```sql
+   SELECT m.MeasurementID, f.FilePath
+   FROM Measurement m JOIN SpectralFile f ON f.MeasurementID = m.MeasurementID
+   WHERE f.FilePath LIKE '%calcite_ER_IR_1_3%';
+   ```
+3. Click the play button above the query, or press Command+Return (Ctrl+Return on Windows). The `MeasurementID` and the file path appear in the table below the query.
+
+Keep the `%` signs before and after the name. They mean "anything here", so the search works even though the stored path includes the folder.
+
+**Step 2: Show only that scan.** Click **Browse Data** and choose the table **Measurement**. In the filter box under **MeasurementID**, type `=` and the number, with no space, for example `=87`. Without the `=`, the filter also shows every ID that contains 87, such as 187 and 287.
+
+**Step 3: Type the value.** Double-click the cell, for example under `Notes`. Type the text in the **Edit Database Cell** pane on the right and click **Apply**. Then click **Write Changes** (Command+S, or Ctrl+S on Windows). To throw the change away instead, click **Revert Changes**. Nothing is saved until you write the changes.
+
+**Filters stay on.** A filter keeps filtering until you delete its text, and several filters work together: a row must match all of them. If rows seem to be missing, clear every filter box in the table first, including the ones to the right.
+
+Before you run the program again, close DB Browser. Afterwards, commit and push the database file in GitHub Desktop, so the typed values are not lost. Do not edit `SpectrumData`, `FilePath`, `Checksum` or `ReferenceMeasurementID` by hand.
 
 ## The date, operator or other information is missing or wrong on scans already loaded
 
