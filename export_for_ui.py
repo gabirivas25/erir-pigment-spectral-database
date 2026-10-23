@@ -91,7 +91,7 @@ def main():
         LEFT JOIN Source src ON src.SourceID = s.SourceID
         LEFT JOIN Operator op ON op.OperatorID = m.OperatorID
         LEFT JOIN InstrumentConfiguration ic ON ic.InstrumentConfigurationID = m.InstrumentConfigurationID
-        LEFT JOIN Instrument ins ON ins.InstrumentID = m.InstrumentID
+        LEFT JOIN Instrument ins ON ins.InstrumentID = ic.InstrumentID
         LEFT JOIN MeasurementSiteType st ON st.MeasurementSiteTypeID = m.MeasurementSiteTypeID
         ORDER BY f.FilePath
     """).fetchall()

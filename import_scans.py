@@ -314,14 +314,15 @@ def main():
     # fixed records (only when creating)
     if one("SELECT COUNT(*) FROM Instrument") == 0:
         cur.execute("INSERT INTO Instrument(InstrumentName,Model,Manufacturer) VALUES (?,?,?)", INSTRUMENT)
+    instrument_id = one("SELECT MIN(InstrumentID) FROM Instrument")
     cfg_id = {}
     for mode, vals in CONFIG.items():
-        found = one("SELECT InstrumentConfigurationID FROM InstrumentConfiguration WHERE Resolution IS ? "
+        found = one("SELECT InstrumentConfigurationID FROM InstrumentConfiguration WHERE InstrumentID=? AND Resolution IS ? "
                     "AND NumberOfScans IS ? AND BeamSplitterType IS ? AND ApertureSize IS ? AND Notes IS ?",
-                    (vals[0], vals[2], vals[3], vals[4], vals[5]))
+                    (instrument_id, vals[0], vals[2], vals[3], vals[4], vals[5]))
         if found is None:
-            cur.execute("INSERT INTO InstrumentConfiguration(Resolution,AngleOfIncidence,NumberOfScans,"
-                        "BeamSplitterType,ApertureSize,Notes) VALUES (?,?,?,?,?,?)", vals)
+            cur.execute("INSERT INTO InstrumentConfiguration(InstrumentID,Resolution,AngleOfIncidence,NumberOfScans,"
+                        "BeamSplitterType,ApertureSize,Notes) VALUES (?,?,?,?,?,?,?)", (instrument_id,) + tuple(vals))
             found = cur.lastrowid
         cfg_id[mode] = found
     op_cache = {}
@@ -344,7 +345,6 @@ def main():
             op_cache[name] = oid
         return op_cache[name]
 
-    instrument_id = one("SELECT MIN(InstrumentID) FROM Instrument")
     site = pick("MeasurementSiteType", "TypeName", "Laboratory", "MeasurementSiteTypeID")
     mode_id = {m: pick("AcquisitionModeType", "ModeName", m, "AcquisitionModeID") for m in ("ER-IR", "ATR")}
 
@@ -450,10 +450,10 @@ def main():
         spectrum = json.dumps([[x, y] for x, y in r["pts"]], separators=(",", ":"))
         bdate, bop, _ = batch_for(r["path"], batches)
         cur.execute(
-            "INSERT INTO Measurement(SpecimenID,InstrumentID,InstrumentConfigurationID,AcquisitionModeID,"
+            "INSERT INTO Measurement(SpecimenID,InstrumentConfigurationID,AcquisitionModeID,"
             "SpectrumData,OperatorID,MeasurementSiteTypeID,ReferenceMeasurementID,SpecimenSpotDescription,ScanDate,Notes) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            (sid, instrument_id, cfg_id[mode], mode_id[mode], spectrum, operator(bop), site, ref, r["spot"], bdate,
+            "VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (sid, cfg_id[mode], mode_id[mode], spectrum, operator(bop), site, ref, r["spot"], bdate,
              r.get("note")))
         if bdate is None:
             undated.append(r["path"])

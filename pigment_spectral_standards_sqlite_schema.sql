@@ -11,7 +11,7 @@
 --   RENAMED   Sample -> Specimen.
 --   RENAMED   LocationType -> MeasurementSiteType.
 --   ADDED     Source (who supplied a specimen), SpecimenType (pick list),
---             Identification (links a specimen to a material it matched).
+--             Identification (links a scan to a material it matched).
 --   ADDED     Material.IsSynthetic and Material.ChemicalClass (optional text,
 --             replaces the MineralClass table); Object.Origin, ObjectDate,
 --             ProvenanceNotes, CurrentAddress, Notes; Collection.Notes;
@@ -22,6 +22,14 @@
 --             done by the optional column Material.ChemicalClass).
 --   REMOVED   Institution.Location, Collection.Location.
 --   REMOVED   EnvironmentConditions and Measurement.ConditionID (never used).
+--   CHANGED   InstrumentConfiguration now belongs to one Instrument
+--             (InstrumentConfiguration.InstrumentID, required). Measurement.
+--             InstrumentID is removed: a scan names its configuration, and
+--             the configuration names the instrument.
+--   ADDED     Instrument.SerialNumber and Instrument.LabAssetID (both optional,
+--             both unique), so two units of the same model stay distinct.
+--   CHANGED   Identification: SpecimenID removed (the measurement already
+--             knows its specimen). Primary key is (MeasurementID, MaterialID).
 --   CHANGED   SpectralFile: now one required .dpt file per measurement;
 --             FileSize and Checksum added. FileRole is removed.
 --
@@ -138,17 +146,21 @@ CREATE TABLE Instrument (
     InstrumentID INTEGER PRIMARY KEY AUTOINCREMENT,
     InstrumentName TEXT,
     Model TEXT,
-    Manufacturer TEXT
+    Manufacturer TEXT,
+    SerialNumber TEXT UNIQUE,             -- from the maker's label; optional
+    LabAssetID TEXT UNIQUE                -- the lab's own inventory number; optional
 );
 
 CREATE TABLE InstrumentConfiguration (
     InstrumentConfigurationID INTEGER PRIMARY KEY AUTOINCREMENT,
+    InstrumentID INTEGER NOT NULL,        -- the instrument these settings belong to
     Resolution TEXT,
     AngleOfIncidence REAL,
     NumberOfScans INTEGER,
     BeamSplitterType TEXT,
     ApertureSize TEXT,
-    Notes TEXT
+    Notes TEXT,
+    FOREIGN KEY (InstrumentID) REFERENCES Instrument(InstrumentID)
 );
 
 
@@ -157,8 +169,7 @@ CREATE TABLE InstrumentConfiguration (
 CREATE TABLE Measurement (
     MeasurementID INTEGER PRIMARY KEY AUTOINCREMENT,
     SpecimenID INTEGER NOT NULL,
-    InstrumentID INTEGER NOT NULL,
-    InstrumentConfigurationID INTEGER NOT NULL,
+    InstrumentConfigurationID INTEGER NOT NULL,   -- the configuration names the instrument
     AcquisitionModeID INTEGER NOT NULL,   -- ER-IR or ATR
     IntensityMode TEXT NOT NULL DEFAULT 'Absorbance',
     SpectrumData TEXT NOT NULL            -- JSON array of [wavenumber, intensity] pairs
@@ -174,7 +185,6 @@ CREATE TABLE Measurement (
     ImageReference TEXT,
     Notes TEXT,
     FOREIGN KEY (SpecimenID) REFERENCES Specimen(SpecimenID),
-    FOREIGN KEY (InstrumentID) REFERENCES Instrument(InstrumentID),
     FOREIGN KEY (InstrumentConfigurationID) REFERENCES InstrumentConfiguration(InstrumentConfigurationID),
     FOREIGN KEY (AcquisitionModeID) REFERENCES AcquisitionModeType(AcquisitionModeID),
     FOREIGN KEY (OperatorID) REFERENCES Operator(OperatorID),
@@ -197,14 +207,14 @@ CREATE TABLE SpectralFile (
 
 -- ---------- Matching results (written by the matching software) ----------
 
+-- A match is a possible identification, not a confirmed one. The specimen
+-- is found through the measurement.
 CREATE TABLE Identification (
-    SpecimenID INTEGER NOT NULL,
-    MaterialID INTEGER NOT NULL,
     MeasurementID INTEGER NOT NULL,
-    PRIMARY KEY (SpecimenID, MaterialID, MeasurementID),
-    FOREIGN KEY (SpecimenID) REFERENCES Specimen(SpecimenID),
-    FOREIGN KEY (MaterialID) REFERENCES Material(MaterialID),
-    FOREIGN KEY (MeasurementID) REFERENCES Measurement(MeasurementID)
+    MaterialID INTEGER NOT NULL,
+    PRIMARY KEY (MeasurementID, MaterialID),
+    FOREIGN KEY (MeasurementID) REFERENCES Measurement(MeasurementID),
+    FOREIGN KEY (MaterialID) REFERENCES Material(MaterialID)
 );
 
 

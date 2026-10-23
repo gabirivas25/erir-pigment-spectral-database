@@ -125,17 +125,21 @@ CREATE TABLE Instrument (
     InstrumentID INT AUTO_INCREMENT PRIMARY KEY,
     InstrumentName VARCHAR(255),
     Model VARCHAR(255),
-    Manufacturer VARCHAR(255)
+    Manufacturer VARCHAR(255),
+    SerialNumber VARCHAR(255) UNIQUE,     -- from the maker's label; optional
+    LabAssetID VARCHAR(255) UNIQUE        -- the lab's own inventory number; optional
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE InstrumentConfiguration (
     InstrumentConfigurationID INT AUTO_INCREMENT PRIMARY KEY,
+    InstrumentID INT NOT NULL,            -- the instrument these settings belong to
     Resolution VARCHAR(255),
     AngleOfIncidence DOUBLE,
     NumberOfScans INT,
     BeamSplitterType VARCHAR(255),
     ApertureSize VARCHAR(255),
-    Notes TEXT
+    Notes TEXT,
+    FOREIGN KEY (InstrumentID) REFERENCES Instrument(InstrumentID)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
@@ -144,8 +148,7 @@ CREATE TABLE InstrumentConfiguration (
 CREATE TABLE Measurement (
     MeasurementID INT AUTO_INCREMENT PRIMARY KEY,
     SpecimenID INT NOT NULL,
-    InstrumentID INT NOT NULL,
-    InstrumentConfigurationID INT NOT NULL,
+    InstrumentConfigurationID INT NOT NULL,   -- the configuration names the instrument
     AcquisitionModeID INT NOT NULL,       -- ER-IR or ATR
     IntensityMode VARCHAR(50) NOT NULL DEFAULT 'Absorbance',
     SpectrumData JSON NOT NULL,           -- array of [wavenumber, intensity] pairs
@@ -160,7 +163,6 @@ CREATE TABLE Measurement (
     ImageReference VARCHAR(1024),
     Notes TEXT,
     FOREIGN KEY (SpecimenID) REFERENCES Specimen(SpecimenID),
-    FOREIGN KEY (InstrumentID) REFERENCES Instrument(InstrumentID),
     FOREIGN KEY (InstrumentConfigurationID) REFERENCES InstrumentConfiguration(InstrumentConfigurationID),
     FOREIGN KEY (AcquisitionModeID) REFERENCES AcquisitionModeType(AcquisitionModeID),
     FOREIGN KEY (OperatorID) REFERENCES Operator(OperatorID),
@@ -183,14 +185,14 @@ CREATE TABLE SpectralFile (
 
 -- ---------- Matching results (written by the matching software) ----------
 
+-- A match is a possible identification, not a confirmed one. The specimen
+-- is found through the measurement.
 CREATE TABLE Identification (
-    SpecimenID INT NOT NULL,
-    MaterialID INT NOT NULL,
     MeasurementID INT NOT NULL,
-    PRIMARY KEY (SpecimenID, MaterialID, MeasurementID),
-    FOREIGN KEY (SpecimenID) REFERENCES Specimen(SpecimenID),
-    FOREIGN KEY (MaterialID) REFERENCES Material(MaterialID),
-    FOREIGN KEY (MeasurementID) REFERENCES Measurement(MeasurementID)
+    MaterialID INT NOT NULL,
+    PRIMARY KEY (MeasurementID, MaterialID),
+    FOREIGN KEY (MeasurementID) REFERENCES Measurement(MeasurementID),
+    FOREIGN KEY (MaterialID) REFERENCES Material(MaterialID)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 

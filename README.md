@@ -83,7 +83,7 @@ The database holds absorbance data only. Spectra are exported as absorbance from
 | `Specimen` | The physical item that was measured: a powder, a ground mineral or a fragment |
 | `Measurement` | One scan, with its spectrum, mode (ER-IR or ATR) and, for an ER-IR scan, the link to its ATR standard |
 | `SpectralFile` | The `.dpt` file for each measurement, with type, size and checksum |
-| `Identification` | Links a specimen to a material it matched. Written by the matching software |
+| `Identification` | Links a scan to a material it may match. A possible match, not a confirmed one. Written by the matching software |
 
 **Provenance and instruments**
 
@@ -91,7 +91,7 @@ The database holds absorbance data only. Spectra are exported as absorbance from
 |---|---|
 | `Object`, `Collection`, `Institution` | For real heritage objects: where they came from, where they are now, and who holds them |
 | `Operator` | Who made the measurement |
-| `Instrument`, `InstrumentConfiguration` | The instrument and its settings |
+| `Instrument`, `InstrumentConfiguration` | The instrument (with optional serial number and lab ID) and its settings. Each configuration belongs to one instrument |
 
 **Data-quality tags**
 
