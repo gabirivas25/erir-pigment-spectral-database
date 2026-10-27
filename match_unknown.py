@@ -119,10 +119,9 @@ def peak_score(pu, ps, tol=8.0):
 
 def load_standards(db):
     con = sqlite3.connect(db)
-    rows = con.execute("""SELECT f.FilePath, m.SpectrumData FROM Measurement m
-        JOIN SpectralFile f ON f.MeasurementID = m.MeasurementID
-        JOIN AcquisitionModeType a ON a.AcquisitionModeID = m.AcquisitionModeID
-        WHERE a.ModeName = 'ER-IR' ORDER BY f.FilePath""").fetchall()
+    rows = con.execute("""SELECT m.FilePath, m.SpectrumData FROM Measurement m
+        JOIN InstrumentConfiguration c ON c.InstrumentConfigurationID = m.InstrumentConfigurationID
+        WHERE c.AcquisitionMode = 'ER-IR' ORDER BY m.FilePath""").fetchall()
     std = []
     for path, data in rows:
         sid = path.split("/")[-1].rsplit(".", 1)[0]

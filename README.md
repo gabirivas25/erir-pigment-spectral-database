@@ -9,14 +9,14 @@ Thesis advisors: Professor Alfonso Zoleo (Chemistry) and Professor Nicola Orio (
 
 A reference database of external reflectance infrared (ER-IR) scans, each paired with the attenuated total reflectance (ATR) standard of the same material. The ER-IR scans are the kind of spectrum that can be taken non-invasively on a real object; the ATR standards are the reference they are compared with. Spectra were measured on a Bruker LUMOS II FT-IR microscope.
 
-**Status:** schema version 4 (17 tables), loaded from the re-exported absorbance scans. The database holds 256 measurements (242 ER-IR and 14 ATR) of 15 materials on 37 specimens. 220 of the ER-IR scans are linked to the ATR standard of the same material. Magnetite has no ATR standard yet and is tagged `needs-atr-recollection`. Files from the earlier version of the project are in [`Archived/`](Archived/).
+**Status:** schema version 5 (6 tables), loaded from the re-exported absorbance scans. The database holds 307 measurements (288 ER-IR and 19 ATR) of 20 materials on 42 specimens. 266 of the ER-IR scans are linked to the ATR standard of the same material. Magnetite has no ATR standard yet and is tagged `needs-atr-recollection`. Files from the earlier version of the project are in [`Archived/`](Archived/).
 
 ## Files
 
 | File | What it is |
 |---|---|
 | `pigment_spectral_standards.db` | The database, SQLite, ready to open |
-| `scans/` | The 256 `.dpt` scan files the database was built from, named `mineral_ER_IR_specimen_scan.dpt` and `mineral_ATR.dpt` (see `NAMING.md`) |
+| `scans/` | The 307 `.dpt` scan files the database was built from, named `mineral_ER_IR_specimen_scan.dpt` and `mineral_ATR.dpt` (see `NAMING.md`) |
 | `import_scans.py` | Adds new scans from `scans/` to the database and writes `import_report.md` |
 | `export_for_ui.py` | Writes the JSON data files for a web interface. The interface is designed (see the thesis) but not built yet; this script is for that future work and is not part of adding scans |
 | `match_unknown.py` | Matches an unknown spectrum against the ER-IR standards (Pearson, first-derivative Pearson, peak position) and prints the top materials. Run `python3 match_unknown.py FILE`, or `python3 match_unknown.py FOLDER` to match every spectrum file in a folder in one table; needs `pip install numpy scipy` (plus `brukeropus` for Bruker `.dpt` binary files). A high score means a similar shape, not a confirmed identification; it never changes the database |
@@ -31,7 +31,7 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 | `import_report.md` | What the import loaded, corrected and skipped |
 | `pigment_spectral_standards_sqlite_schema.sql` | Creates an empty database in SQLite |
 | `pigment_spectral_standards_mysql_schema.sql` | The same design for MySQL 8 (schema only) |
-| `ER_Diagram.png` | Entity-relationship diagram of the 17 tables |
+| `ER_Diagram.png` | Entity-relationship diagram of the 6 tables |
 | `Archived/` | The earlier schema, its data and the analysis scripts that used it |
 
 ## How to open it, for non-technical readers
@@ -58,7 +58,7 @@ To create an empty database from the schema:
 sqlite3 new_database.db < pigment_spectral_standards_sqlite_schema.sql
 ```
 
-SQLite enforces foreign keys only when `PRAGMA foreign_keys = ON` is set for the connection. DB Browser for SQLite turns it on by default.
+SQLite enforces foreign keys only when `PRAGMA foreign_keys = ON` is set for the connection. Check that foreign keys are on in the program you use.
 
 ```python
 import sqlite3
@@ -70,42 +70,18 @@ print(conn.execute("SELECT * FROM Material").fetchall())
 
 Each measurement holds its whole spectrum in one column, `Measurement.SpectrumData`, as a JSON array of `[wavenumber, intensity]` pairs, for example `[[598.1, 0.52], [600.2, 0.53], ...]`. An ER-IR scan has 1,660 pairs and an ATR scan has 1,934. The pairs stay together, and SQLite refuses text in this column that is not valid JSON.
 
-The database holds absorbance data only. Spectra are exported as absorbance from OPUS, and `IntensityMode` is filled in as `Absorbance`. If a batch was exported as transmittance or reflectance by mistake, mark its line in `scan_batches.csv` (`intensity` column) and `import_scans.py` converts it to absorbance while loading; the measurement's Notes record the conversion. The original `.dpt` file for each measurement is recorded in `SpectralFile`, with its size and a checksum.
+The database holds absorbance data only. Spectra are exported as absorbance from OPUS, and `IntensityMode` is filled in as `Absorbance`, and a rule in the schema accepts no other value. If a batch was exported as transmittance or reflectance by mistake, mark its line in `scan_batches.csv` (`intensity` column) and `import_scans.py` converts it to absorbance while loading; the measurement's Notes record the conversion. The original `.dpt` file for each measurement is recorded in `Measurement.FilePath`, with a checksum (`Checksum`) and the upload time (`UploadedAt`).
 
-## Schema overview (17 tables)
-
-**Core data**
+## Schema overview (6 tables)
 
 | Table | Purpose |
 |---|---|
-| `Material` | A pigment or mineral: name, chemical formula, whether it is synthetic (Y or N) |
-| `Source` | Who supplied a specimen, for example a collection or a commercial supplier |
-| `Specimen` | The physical item that was measured: a powder, a ground mineral or a fragment |
-| `Measurement` | One scan, with its spectrum, mode (ER-IR or ATR) and, for an ER-IR scan, the link to its ATR standard |
-| `SpectralFile` | The `.dpt` file for each measurement, with type, size and checksum |
-| `Identification` | Links a scan to a material it may match. A possible match, not a confirmed one. Written by the matching software |
-
-**Provenance and instruments**
-
-| Table | Purpose |
-|---|---|
-| `Object`, `Collection`, `Institution` | For real heritage objects: where they came from, where they are now, and who holds them |
-| `Operator` | Who made the measurement |
-| `Instrument`, `InstrumentConfiguration` | The instrument (with optional serial number and lab ID) and its settings. Each configuration belongs to one instrument |
-
-**Data-quality tags**
-
-| Table | Purpose |
-|---|---|
-| `Tag`, `TaggedEntity` | Labels, such as `needs-atr-recollection`, attached to a specimen or a measurement |
-
-**Pick lists**
-
-| Table | Values |
-|---|---|
-| `AcquisitionModeType` | ER-IR, ATR |
-| `MeasurementSiteType` | Laboratory, In Situ - Interior, In Situ - Exterior |
-| `SpecimenType` | powder pigment, ground mineral, mineral fragment |
+| `Material` | A pigment or mineral: name, chemical formula, whether it is synthetic (Y or N), description, chemical class |
+| `Specimen` | The physical item that was measured: type, preparation notes, its material, its source and its tags. Type, source and tags are free text; several tags are separated by a semicolon |
+| `Measurement` | One scan: its spectrum, the specimen, the instrument configuration, the operator, the scan date, the `.dpt` file path and checksum, and, for an ER-IR scan, the link to its ATR standard. Intensity is limited to `Absorbance` and the date to the format YYYY-MM-DD |
+| `Instrument` | The instrument, with optional serial number and lab ID |
+| `InstrumentConfiguration` | The settings used: resolution, number of scans, beam splitter, detector, aperture, and the acquisition mode (`ER-IR` or `ATR`, limited by a rule). Each configuration belongs to one instrument |
+| `Operator` | Who made the measurement: name, email, institution (free text) |
 
 Most fields are optional. The required ones are marked `NOT NULL` in the schema file.
 
@@ -116,10 +92,10 @@ How many ER-IR scans exist for each material:
 ```sql
 SELECT mat.MaterialName, COUNT(*) AS n_scans
 FROM Measurement m
-JOIN AcquisitionModeType amt ON amt.AcquisitionModeID = m.AcquisitionModeID
+JOIN InstrumentConfiguration c ON c.InstrumentConfigurationID = m.InstrumentConfigurationID
 JOIN Specimen s ON s.SpecimenID = m.SpecimenID
 JOIN Material mat ON mat.MaterialID = s.MaterialID
-WHERE amt.ModeName = 'ER-IR'
+WHERE c.AcquisitionMode = 'ER-IR'
 GROUP BY mat.MaterialName;
 ```
 
@@ -128,31 +104,27 @@ Unpack the full spectrum of one scan into wavenumber and intensity rows:
 ```sql
 SELECT json_extract(p.value, '$[0]') AS Wavenumber,
        json_extract(p.value, '$[1]') AS Intensity
-FROM Measurement m
-JOIN SpectralFile f ON f.MeasurementID = m.MeasurementID,
+FROM Measurement m,
      json_each(m.SpectrumData) p
-WHERE f.FilePath LIKE '%aragonite_ER_IR_1_0.dpt'
+WHERE m.FilePath LIKE '%aragonite_ER_IR_1_0.dpt'
 ORDER BY Wavenumber DESC;
 ```
 
 List each ER-IR scan next to its ATR standard:
 
 ```sql
-SELECT fe.FilePath AS ER_IR_scan, fa.FilePath AS ATR_standard
+SELECT er.FilePath AS ER_IR_scan, atr.FilePath AS ATR_standard
 FROM Measurement er
-JOIN SpectralFile fe ON fe.MeasurementID = er.MeasurementID
-JOIN SpectralFile fa ON fa.MeasurementID = er.ReferenceMeasurementID;
+JOIN Measurement atr ON atr.MeasurementID = er.ReferenceMeasurementID;
 ```
 
-Show the data-quality tags on specimens:
+Show the specimens that carry tags:
 
 ```sql
-SELECT t.TagLabel, mat.MaterialName, s.SpecimenID
-FROM TaggedEntity te
-JOIN Tag t ON t.TagID = te.TagID
-JOIN Specimen s ON s.SpecimenID = te.EntityID
+SELECT s.SpecimenID, mat.MaterialName, s.Tags
+FROM Specimen s
 LEFT JOIN Material mat ON mat.MaterialID = s.MaterialID
-WHERE te.EntityType = 'Specimen';
+WHERE s.Tags IS NOT NULL;
 ```
 
 ## How `match_unknown.py` works

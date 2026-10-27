@@ -18,8 +18,8 @@ for name, formula, synth in con.execute(
 
 print("\nScans by acquisition mode")
 for mode, n in con.execute(
-        """SELECT a.ModeName, COUNT(*) FROM Measurement m
-           JOIN AcquisitionModeType a ON a.AcquisitionModeID = m.AcquisitionModeID
-           GROUP BY a.ModeName"""):
+        """SELECT c.AcquisitionMode, COUNT(*) FROM Measurement m
+           JOIN InstrumentConfiguration c ON c.InstrumentConfigurationID = m.InstrumentConfigurationID
+           GROUP BY c.AcquisitionMode"""):
     print("  %-8s %d" % (mode, n))
 print("\nTotal scans:", con.execute("SELECT COUNT(*) FROM Measurement").fetchone()[0])

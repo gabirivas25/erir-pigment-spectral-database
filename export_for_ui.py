@@ -78,32 +78,23 @@ def main():
 
     rows = con.execute("""
         SELECT m.MeasurementID, m.SpectrumData, m.ScanDate, m.ReferenceMeasurementID,
-               m.IntensityMode, amt.ModeName AS Mode, f.FilePath,
+               m.IntensityMode, ic.AcquisitionMode AS Mode, m.FilePath,
                op.Name AS Operator, mat.MaterialName, mat.ChemicalFormula, mat.ChemicalClass, mat.IsSynthetic,
-               mat.Description, src.SourceName,
-               ic.Resolution, ic.NumberOfScans, ic.BeamSplitterType, ic.ApertureSize, ic.Notes AS ConfigNotes,
-               ins.InstrumentName, ins.Model, ins.Manufacturer, st.TypeName AS SiteName
+               mat.Description, s.SpecimenSource, s.Tags,
+               ic.Resolution, ic.NumberOfScans, ic.BeamSplitterType, ic.Detector, ic.ApertureSize, ic.Notes AS ConfigNotes,
+               ins.InstrumentName, ins.Model, ins.Manufacturer
         FROM Measurement m
-        JOIN SpectralFile f ON f.MeasurementID = m.MeasurementID
-        JOIN AcquisitionModeType amt ON amt.AcquisitionModeID = m.AcquisitionModeID
+        JOIN InstrumentConfiguration ic ON ic.InstrumentConfigurationID = m.InstrumentConfigurationID
         JOIN Specimen s ON s.SpecimenID = m.SpecimenID
         LEFT JOIN Material mat ON mat.MaterialID = s.MaterialID
-        LEFT JOIN Source src ON src.SourceID = s.SourceID
         LEFT JOIN Operator op ON op.OperatorID = m.OperatorID
-        LEFT JOIN InstrumentConfiguration ic ON ic.InstrumentConfigurationID = m.InstrumentConfigurationID
         LEFT JOIN Instrument ins ON ins.InstrumentID = ic.InstrumentID
-        LEFT JOIN MeasurementSiteType st ON st.MeasurementSiteTypeID = m.MeasurementSiteTypeID
-        ORDER BY f.FilePath
+        ORDER BY m.FilePath
     """).fetchall()
 
     id_by_measurement = {}
     for r in rows:
         id_by_measurement[r["MeasurementID"]] = os.path.splitext(os.path.basename(r["FilePath"]))[0]
-
-    tags = {}
-    for t in con.execute("""SELECT te.EntityID, t.TagLabel FROM TaggedEntity te
-                            JOIN Tag t ON t.TagID = te.TagID WHERE te.EntityType = 'Measurement'"""):
-        tags.setdefault(t["EntityID"], []).append(t["TagLabel"])
 
     scans, materials, match_index = [], {}, []
     for r in rows:
@@ -140,18 +131,18 @@ def main():
             "scanDate": r["ScanDate"], "operator": r["Operator"],
             "intensityMode": r["IntensityMode"],
             "atrStandardId": id_by_measurement.get(r["ReferenceMeasurementID"]),
-            "tags": tags.get(r["MeasurementID"], []),
+            "tags": [t.strip() for t in (r["Tags"] or "").split(";") if t.strip()],
             "instrument": " ".join(x for x in (r["Manufacturer"], r["InstrumentName"], r["Model"]) if x),
             "resolution": r["Resolution"], "numberOfScans": r["NumberOfScans"],
-            "window": r["BeamSplitterType"], "aperture": r["ApertureSize"],
-            "configNotes": r["ConfigNotes"], "site": r["SiteName"],
+            "window": r["BeamSplitterType"], "detector": r["Detector"], "aperture": r["ApertureSize"],
+            "configNotes": r["ConfigNotes"],
             "points": len(data),
         })
 
         m = materials.setdefault(key, {
             "id": key, "name": r["MaterialName"], "formula": r["ChemicalFormula"], "chemicalClass": r["ChemicalClass"],
             "isSynthetic": r["IsSynthetic"] == "Y", "description": r["Description"],
-            "source": r["SourceName"], "color": COLORS.get(key, FALLBACK_COLOR),
+            "source": r["SpecimenSource"], "color": COLORS.get(key, FALLBACK_COLOR),
             "erIrCount": 0, "atrCount": 0,
         })
         m["erIrCount" if mode == "ER-IR" else "atrCount"] += 1

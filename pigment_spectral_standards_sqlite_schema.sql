@@ -1,113 +1,49 @@
 -- ============================================================
--- Pigment Spectral Standards Database: SCHEMA v4 (SQLite)
+-- Pigment Spectral Standards Database: SCHEMA v5 (SQLite)
 -- Prepared by Maria Gabriela Rivas Carmona, University of Padova
 -- ============================================================
--- Table count: 17 (14 data tables + 3 pick lists)
+-- Table count: 6
+--   Material, Specimen, Measurement, Instrument, InstrumentConfiguration, Operator
 --
--- CHANGES FROM v3 (after feedback from Prof. Orio):
---   MERGED    Spectrum and SpectralDataPoint into Measurement. A measurement
---             has exactly one spectrum, stored as a JSON array of
---             [wavenumber, intensity] pairs in Measurement.SpectrumData.
---   RENAMED   Sample -> Specimen.
---   RENAMED   LocationType -> MeasurementSiteType.
---   ADDED     Source (who supplied a specimen), SpecimenType (pick list),
---             Identification (links a scan to a material it matched).
---   ADDED     Material.IsSynthetic (Y or N) and Material.ChemicalClass (optional text,
---             replaces the MineralClass table); Object.Origin, ObjectDate,
---             ProvenanceNotes, CurrentAddress, Notes; Collection.Notes;
---             InstrumentConfiguration.Notes; ImageReference columns;
---             Measurement spot description fields.
---   REMOVED   Spectrum, SpectralDataPoint, PostProcessing,
---             MeasurementLocation, MineralClass (the table; its job is now
---             done by the optional column Material.ChemicalClass).
---   REMOVED   Institution.Location, Collection.Location.
---   REMOVED   EnvironmentConditions and Measurement.ConditionID (never used).
---   CHANGED   InstrumentConfiguration now belongs to one Instrument
---             (InstrumentConfiguration.InstrumentID, required). Measurement.
---             InstrumentID is removed: a scan names its configuration, and
---             the configuration names the instrument.
---   ADDED     Instrument.SerialNumber and Instrument.LabAssetID (both optional,
---             both unique), so two units of the same model stay distinct.
---   CHANGED   Identification: SpecimenID removed (the measurement already
---             knows its specimen). Primary key is (MeasurementID, MaterialID).
---   CHANGED   SpectralFile: now one required .dpt file per measurement;
---             FileSize and Checksum added. FileRole is removed.
+-- Scope: a library of ER-IR reference scans of materials. Researchers match
+-- unknown scans against it. Matching is read-only and unknown scans are
+-- not stored.
 --
--- A field is required (NOT NULL) only where the field list in the
--- revision document marks it with *. Every other field is optional.
+-- CHANGES FROM v4:
+--   REMOVED   Object, Collection, MeasurementSiteType (out of scope: the
+--             database holds reference scans, not scans of objects).
+--             Specimen.ObjectID, Specimen.SourceID, Specimen.SourceNotes,
+--             Measurement.ObjectSpotDescription, PointX_cm, PointY_cm and
+--             MeasurementSiteTypeID are removed with them.
+--   REMOVED   Source and SpecimenType tables. Specimen.SpecimenSource and
+--             Specimen.SpecimenType are now free text.
+--   REMOVED   Tag and TaggedEntity tables. Specimen.Tags is now a text
+--             column (labels separated by a semicolon).
+--   REMOVED   SpectralFile. Measurement now holds FilePath (required),
+--             Checksum and UploadedAt.
+--   REMOVED   Identification (matching results are not stored; a junction
+--             table between Measurement and Material could be added later).
+--   REMOVED   Institution table. Operator.Institution is now text.
+--   REMOVED   AcquisitionModeType table and Measurement.AcquisitionModeID.
+--             InstrumentConfiguration.AcquisitionMode is text, limited to
+--             'ER-IR' or 'ATR' by a CHECK rule.
+--   REMOVED   InstrumentConfiguration.AngleOfIncidence.
+--   ADDED     InstrumentConfiguration.Detector (default 'LN-MCT').
+--   ADDED     CHECK rules: Measurement.IntensityMode = 'Absorbance';
+--             Measurement.ScanDate in the format YYYY-MM-DD.
+--
+-- A field is required (NOT NULL) only where the data dictionary marks it
+-- NOT NULL. Every other field is optional.
 --
 -- NOTE: SQLite enforces foreign keys only when PRAGMA foreign_keys = ON
--- for the connection. DB Browser for SQLite turns it on by default.
+-- for the connection. No ON DELETE action is set, so the default
+-- (NO ACTION) applies: a row cannot be deleted while another row points to it.
 -- ============================================================
 
 PRAGMA foreign_keys = ON;
 
 
--- ---------- Pick lists (3) ----------
-
-CREATE TABLE AcquisitionModeType (
-    AcquisitionModeID INTEGER PRIMARY KEY AUTOINCREMENT,
-    ModeName TEXT UNIQUE NOT NULL
-);
-
-CREATE TABLE MeasurementSiteType (
-    MeasurementSiteTypeID INTEGER PRIMARY KEY AUTOINCREMENT,
-    TypeName TEXT UNIQUE NOT NULL
-);
-
-CREATE TABLE SpecimenType (
-    SpecimenTypeID INTEGER PRIMARY KEY AUTOINCREMENT,
-    TypeName TEXT UNIQUE NOT NULL
-);
-
-INSERT INTO AcquisitionModeType (ModeName) VALUES ('ER-IR'), ('ATR');
-INSERT INTO MeasurementSiteType (TypeName) VALUES
-    ('Laboratory'), ('In Situ - Interior'), ('In Situ - Exterior');
-INSERT INTO SpecimenType (TypeName) VALUES
-    ('powder pigment'), ('ground mineral'), ('mineral fragment');
-
-
--- ---------- Institutions, operators, collections, objects ----------
-
-CREATE TABLE Institution (
-    InstitutionID INTEGER PRIMARY KEY AUTOINCREMENT,
-    InstitutionName TEXT
-);
-
-CREATE TABLE Operator (
-    OperatorID INTEGER PRIMARY KEY AUTOINCREMENT,
-    Name TEXT,
-    Email TEXT,
-    InstitutionID INTEGER,
-    FOREIGN KEY (InstitutionID) REFERENCES Institution(InstitutionID)
-);
-
-CREATE TABLE Collection (
-    CollectionID INTEGER PRIMARY KEY AUTOINCREMENT,
-    CollectionName TEXT,
-    InstitutionID INTEGER,             -- optional: excavation finds, for example,
-                                        -- are a collection with no institution
-    Notes TEXT,
-    FOREIGN KEY (InstitutionID) REFERENCES Institution(InstitutionID)
-);
-
-CREATE TABLE Object (
-    ObjectID INTEGER PRIMARY KEY AUTOINCREMENT,
-    ObjectName TEXT,
-    Description TEXT,
-    CollectionID INTEGER,
-    Origin TEXT,                       -- where the object came from originally
-    ObjectDate TEXT,                   -- date or period, as text (often approximate)
-    ProvenanceNotes TEXT,
-    CurrentAddress TEXT,               -- where the object is now
-    CoordinateReference TEXT,          -- reference point for Measurement.PointX_cm / PointY_cm
-    Notes TEXT,
-    ImageReference TEXT,               -- file name, ID or URL; image is held outside the database
-    FOREIGN KEY (CollectionID) REFERENCES Collection(CollectionID)
-);
-
-
--- ---------- Materials, sources, specimens ----------
+-- ---------- Materials and specimens ----------
 
 CREATE TABLE Material (
     MaterialID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,31 +52,29 @@ CREATE TABLE Material (
     IsSynthetic TEXT                   -- Y = synthetic, N = natural, empty = not stated
         CHECK (IsSynthetic IN ('Y', 'N')),
     Description TEXT,
-    ChemicalClass TEXT                 -- optional, e.g. 'Carbonate', 'Oxide', 'Sulfide', 'Silicate', 'Acetate'
-);
-
-CREATE TABLE Source (
-    SourceID INTEGER PRIMARY KEY AUTOINCREMENT,
-    SourceName TEXT UNIQUE NOT NULL
+    ChemicalClass TEXT                 -- optional, e.g. 'Carbonate', 'Oxide'; several separated by a semicolon
 );
 
 CREATE TABLE Specimen (
     SpecimenID INTEGER PRIMARY KEY AUTOINCREMENT,
-    SpecimenTypeID INTEGER,
+    SpecimenType TEXT,                 -- free text, e.g. 'mineral fragment', 'ground mineral', 'powder pigment'
     PreparationNotes TEXT,
-    SourceNotes TEXT,                  -- e.g. product number, or a group of similar pieces
-    MaterialID INTEGER,                -- known for standards, empty for unknowns
-    ObjectID INTEGER,                  -- for pieces of a real object
-    SourceID INTEGER,
+    MaterialID INTEGER,                -- the material of the specimen; known for standards
+    SpecimenSource TEXT,               -- who supplied the piece, free text
+    Tags TEXT,                         -- labels separated by a semicolon, e.g. 'needs-atr-recollection'
     ImageReference TEXT,
-    FOREIGN KEY (SpecimenTypeID) REFERENCES SpecimenType(SpecimenTypeID),
-    FOREIGN KEY (MaterialID) REFERENCES Material(MaterialID),
-    FOREIGN KEY (ObjectID) REFERENCES Object(ObjectID),
-    FOREIGN KEY (SourceID) REFERENCES Source(SourceID)
+    FOREIGN KEY (MaterialID) REFERENCES Material(MaterialID)
 );
 
 
--- ---------- Instrumentation ----------
+-- ---------- People and instrumentation ----------
+
+CREATE TABLE Operator (
+    OperatorID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT,
+    Email TEXT,
+    Institution TEXT                   -- free text
+);
 
 CREATE TABLE Instrument (
     InstrumentID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -155,9 +89,11 @@ CREATE TABLE InstrumentConfiguration (
     InstrumentConfigurationID INTEGER PRIMARY KEY AUTOINCREMENT,
     InstrumentID INTEGER NOT NULL,        -- the instrument these settings belong to
     Resolution TEXT,
-    AngleOfIncidence REAL,
     NumberOfScans INTEGER,
     BeamSplitterType TEXT,
+    Detector TEXT DEFAULT 'LN-MCT',
+    AcquisitionMode TEXT NOT NULL         -- ER-IR or ATR
+        CHECK (AcquisitionMode IN ('ER-IR', 'ATR')),
     ApertureSize TEXT,
     Notes TEXT,
     FOREIGN KEY (InstrumentID) REFERENCES Instrument(InstrumentID)
@@ -169,68 +105,25 @@ CREATE TABLE InstrumentConfiguration (
 CREATE TABLE Measurement (
     MeasurementID INTEGER PRIMARY KEY AUTOINCREMENT,
     SpecimenID INTEGER NOT NULL,
-    InstrumentConfigurationID INTEGER NOT NULL,   -- the configuration names the instrument
-    AcquisitionModeID INTEGER NOT NULL,   -- ER-IR or ATR
-    IntensityMode TEXT NOT NULL DEFAULT 'Absorbance',
+    InstrumentConfigurationID INTEGER NOT NULL,   -- the configuration names the instrument and the mode
+    IntensityMode TEXT NOT NULL DEFAULT 'Absorbance'
+        CHECK (IntensityMode = 'Absorbance'),
     SpectrumData TEXT NOT NULL            -- JSON array of [wavenumber, intensity] pairs
         CHECK (json_valid(SpectrumData)),
     OperatorID INTEGER,
-    MeasurementSiteTypeID INTEGER,
     ReferenceMeasurementID INTEGER,       -- links an ER-IR scan to its ATR standard
-    ScanDate TEXT,                        -- date of the scan, YYYY-MM-DD, entered by hand
-    ObjectSpotDescription TEXT,           -- where on a real object the spot is
+    ScanDate TEXT                         -- date of the scan, YYYY-MM-DD
+        CHECK (ScanDate IS NULL OR ScanDate GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
     SpecimenSpotDescription TEXT,         -- where on the specimen the spot is
-    PointX_cm REAL,                       -- cm from Object.CoordinateReference
-    PointY_cm REAL,
     ImageReference TEXT,
+    FilePath TEXT NOT NULL,               -- the .dpt file (required)
+    Checksum TEXT,                        -- SHA-256 of the file
+    UploadedAt TEXT DEFAULT CURRENT_TIMESTAMP,
     Notes TEXT,
     FOREIGN KEY (SpecimenID) REFERENCES Specimen(SpecimenID),
     FOREIGN KEY (InstrumentConfigurationID) REFERENCES InstrumentConfiguration(InstrumentConfigurationID),
-    FOREIGN KEY (AcquisitionModeID) REFERENCES AcquisitionModeType(AcquisitionModeID),
     FOREIGN KEY (OperatorID) REFERENCES Operator(OperatorID),
-    FOREIGN KEY (MeasurementSiteTypeID) REFERENCES MeasurementSiteType(MeasurementSiteTypeID),
     FOREIGN KEY (ReferenceMeasurementID) REFERENCES Measurement(MeasurementID)
-);
-
-CREATE TABLE SpectralFile (
-    FileID INTEGER PRIMARY KEY AUTOINCREMENT,
-    MeasurementID INTEGER NOT NULL,
-    FilePath TEXT NOT NULL,               -- the .dpt file (required)
-    FileType TEXT,                        -- filled in at upload, from the extension
-    FileSize INTEGER,                     -- bytes, filled in at upload
-    Checksum TEXT,                        -- fingerprint, filled in at upload
-    UploadedAt TEXT DEFAULT CURRENT_TIMESTAMP,
-    Description TEXT,
-    FOREIGN KEY (MeasurementID) REFERENCES Measurement(MeasurementID)
-);
-
-
--- ---------- Matching results (written by the matching software) ----------
-
--- A match is a possible identification, not a confirmed one. The specimen
--- is found through the measurement.
-CREATE TABLE Identification (
-    MeasurementID INTEGER NOT NULL,
-    MaterialID INTEGER NOT NULL,
-    PRIMARY KEY (MeasurementID, MaterialID),
-    FOREIGN KEY (MeasurementID) REFERENCES Measurement(MeasurementID),
-    FOREIGN KEY (MaterialID) REFERENCES Material(MaterialID)
-);
-
-
--- ---------- Tags for data-quality notes ----------
-
-CREATE TABLE Tag (
-    TagID INTEGER PRIMARY KEY AUTOINCREMENT,
-    TagLabel TEXT UNIQUE NOT NULL
-);
-
-CREATE TABLE TaggedEntity (
-    TagID INTEGER NOT NULL,
-    EntityType TEXT NOT NULL CHECK (EntityType IN ('Specimen', 'Measurement')),
-    EntityID INTEGER NOT NULL,
-    PRIMARY KEY (TagID, EntityType, EntityID),
-    FOREIGN KEY (TagID) REFERENCES Tag(TagID)
 );
 
 
@@ -239,4 +132,3 @@ CREATE TABLE TaggedEntity (
 CREATE INDEX idx_measurement_specimen  ON Measurement(SpecimenID);
 CREATE INDEX idx_measurement_reference ON Measurement(ReferenceMeasurementID);
 CREATE INDEX idx_specimen_material     ON Specimen(MaterialID);
-CREATE INDEX idx_spectralfile_meas     ON SpectralFile(MeasurementID);

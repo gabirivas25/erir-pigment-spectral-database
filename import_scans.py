@@ -25,7 +25,7 @@ WHAT IT DOES
        values for the same material and mode), keeping the lowest scan number. Both are listed.
     4. Adds, for each new scan: the measurement, its spectrum, its file record (path, size,
        checksum) and its link to the ATR standard of the same material.
-    5. Creates materials, sources and specimens as they are needed, from materials.csv.
+    5. Creates materials and specimens as they are needed, from materials.csv.
        Each new scan gets its ScanDate (written DD-MM-YYYY in the sheet, stored as YYYY-MM-DD) and its operator from scan_batches.csv (longest matching
        folder prefix); operators are described in operators.csv and added to the database on first use.
     6. Keeps the `needs-atr-recollection` tag up to date and writes a report.
@@ -60,10 +60,11 @@ import sys
 
 # The instrument and the scan settings are the standard setup and are the same for every operator.
 INSTRUMENT = ("FTIR microscope", "LUMOS II", "Bruker")
-# (Resolution, AngleOfIncidence, NumberOfScans, BeamSplitterType, ApertureSize, Notes)
+# (Resolution, NumberOfScans, BeamSplitterType, Detector, ApertureSize, Notes)
 CONFIG = {
-    "ER-IR": ("4 cm-1", None, 64, "ZnSe", "30 um", None),
-    "ATR": ("4 cm-1", None, 32, "ZnSe", None, "Positioning speed: medium. Pressure: low."),
+    "ER-IR": ("4 cm-1", 64, "ZnSe", "LN-MCT", "30 um", None),
+    "ATR": ("4 cm-1", 32, "ZnSe", "LN-MCT", None,
+            "Germanium ATR crystal (retractable). Positioning speed: medium. Pressure: low."),
 }
 ATR_SPECIMEN_NOTE = "Reference standard for comparison; ground to a powder from one of the specimens"
 TAG_MISSING_ATR = "needs-atr-recollection"
@@ -307,22 +308,20 @@ def main():
             sys.exit("'%s' is not in the %s pick list. Check materials.csv." % (val, table))
         return v
 
-    for k, m in mats.items():
-        if m["specimen_type"]:
-            pick("SpecimenType", "TypeName", m["specimen_type"], "SpecimenTypeID")
-
     # fixed records (only when creating)
     if one("SELECT COUNT(*) FROM Instrument") == 0:
         cur.execute("INSERT INTO Instrument(InstrumentName,Model,Manufacturer) VALUES (?,?,?)", INSTRUMENT)
     instrument_id = one("SELECT MIN(InstrumentID) FROM Instrument")
     cfg_id = {}
     for mode, vals in CONFIG.items():
-        found = one("SELECT InstrumentConfigurationID FROM InstrumentConfiguration WHERE InstrumentID=? AND Resolution IS ? "
-                    "AND NumberOfScans IS ? AND BeamSplitterType IS ? AND ApertureSize IS ? AND Notes IS ?",
-                    (instrument_id, vals[0], vals[2], vals[3], vals[4], vals[5]))
+        found = one("SELECT InstrumentConfigurationID FROM InstrumentConfiguration WHERE InstrumentID=? AND AcquisitionMode=? "
+                    "AND Resolution IS ? AND NumberOfScans IS ? AND BeamSplitterType IS ? AND Detector IS ? "
+                    "AND ApertureSize IS ? AND Notes IS ?",
+                    (instrument_id, mode) + tuple(vals))
         if found is None:
-            cur.execute("INSERT INTO InstrumentConfiguration(InstrumentID,Resolution,AngleOfIncidence,NumberOfScans,"
-                        "BeamSplitterType,ApertureSize,Notes) VALUES (?,?,?,?,?,?,?)", (instrument_id,) + tuple(vals))
+            cur.execute("INSERT INTO InstrumentConfiguration(InstrumentID,AcquisitionMode,Resolution,NumberOfScans,"
+                        "BeamSplitterType,Detector,ApertureSize,Notes) VALUES (?,?,?,?,?,?,?,?)",
+                        (instrument_id, mode) + tuple(vals))
             found = cur.lastrowid
         cfg_id[mode] = found
     op_cache = {}
@@ -334,19 +333,10 @@ def main():
             oid = one("SELECT OperatorID FROM Operator WHERE Name=?", (name,))
             if oid is None:
                 email, inst = operators[name]
-                iid = None
-                if inst:
-                    iid = one("SELECT InstitutionID FROM Institution WHERE InstitutionName=?", (inst,))
-                    if iid is None:
-                        cur.execute("INSERT INTO Institution(InstitutionName) VALUES (?)", (inst,))
-                        iid = cur.lastrowid
-                cur.execute("INSERT INTO Operator(Name,Email,InstitutionID) VALUES (?,?,?)", (name, email, iid))
+                cur.execute("INSERT INTO Operator(Name,Email,Institution) VALUES (?,?,?)", (name, email, inst))
                 oid = cur.lastrowid
             op_cache[name] = oid
         return op_cache[name]
-
-    site = pick("MeasurementSiteType", "TypeName", "Laboratory", "MeasurementSiteTypeID")
-    mode_id = {m: pick("AcquisitionModeType", "ModeName", m, "AcquisitionModeID") for m in ("ER-IR", "ATR")}
 
     # ---- what is already in the database ----
     key_of_name = {v["material_name"]: k for k, v in mats.items()}
@@ -356,8 +346,8 @@ def main():
         if name in key_of_name:
             mat_id[key_of_name[name]] = mid
     for mid, mode, sid, path, js in cur.execute(
-            "SELECT m.MeasurementID, am.ModeName, m.SpecimenID, f.FilePath, m.SpectrumData FROM Measurement m "
-            "JOIN SpectralFile f USING(MeasurementID) JOIN AcquisitionModeType am USING(AcquisitionModeID) "
+            "SELECT m.MeasurementID, c.AcquisitionMode, m.SpecimenID, m.FilePath, m.SpectrumData FROM Measurement m "
+            "JOIN InstrumentConfiguration c USING(InstrumentConfigurationID) "
             "ORDER BY m.MeasurementID").fetchall():
         have_paths.add(path)
         info = classify(path, mats)
@@ -420,24 +410,19 @@ def main():
             mat_id[key] = cur.lastrowid
         return mat_id[key]
 
-    def source(name):
-        if name is None:
-            return None
-        cur.execute("INSERT OR IGNORE INTO Source(SourceName) VALUES (?)", (name,))
-        return one("SELECT SourceID FROM Source WHERE SourceName=?", (name,))
-
     def specimen(key, n):
         m = mats[key]
         k = (key, 1 if m["is_synthetic"] else n)
         if k in spec_id:
             return spec_id[k]
-        stype = pick("SpecimenType", "TypeName", m["specimen_type"], "SpecimenTypeID") if m["specimen_type"] else None
+        # SpecimenSource: the full source note when materials.csv has one, otherwise the source name
+        src = m["source_notes"] or m["source"]
         if n == 0 and not m["is_synthetic"]:
-            row = (pick("SpecimenType", "TypeName", "ground mineral", "SpecimenTypeID"), ATR_SPECIMEN_NOTE, None)
+            row = ("ground mineral", ATR_SPECIMEN_NOTE)
         else:
-            row = (stype, m["preparation_notes"], m["source_notes"])
-        cur.execute("INSERT INTO Specimen(SpecimenTypeID,PreparationNotes,SourceNotes,MaterialID,SourceID) "
-                    "VALUES (?,?,?,?,?)", (row[0], row[1], row[2], material(key), source(m["source"])))
+            row = (m["specimen_type"], m["preparation_notes"])
+        cur.execute("INSERT INTO Specimen(SpecimenType,PreparationNotes,MaterialID,SpecimenSource) "
+                    "VALUES (?,?,?,?)", (row[0], row[1], material(key), src))
         spec_id[k] = cur.lastrowid
         return spec_id[k]
 
@@ -450,11 +435,11 @@ def main():
         spectrum = json.dumps([[x, y] for x, y in r["pts"]], separators=(",", ":"))
         bdate, bop, _ = batch_for(r["path"], batches)
         cur.execute(
-            "INSERT INTO Measurement(SpecimenID,InstrumentConfigurationID,AcquisitionModeID,"
-            "SpectrumData,OperatorID,MeasurementSiteTypeID,ReferenceMeasurementID,SpecimenSpotDescription,ScanDate,Notes) "
+            "INSERT INTO Measurement(SpecimenID,InstrumentConfigurationID,SpectrumData,OperatorID,"
+            "ReferenceMeasurementID,SpecimenSpotDescription,ScanDate,FilePath,Checksum,Notes) "
             "VALUES (?,?,?,?,?,?,?,?,?,?)",
-            (sid, cfg_id[mode], mode_id[mode], spectrum, operator(bop), site, ref, r["spot"], bdate,
-             r.get("note")))
+            (sid, cfg_id[mode], spectrum, operator(bop), ref, r["spot"], bdate, r["path"],
+             hashlib.sha256(open(r["full"], "rb").read()).hexdigest(), r.get("note")))
         if bdate is None:
             undated.append(r["path"])
         if bop is None:
@@ -462,9 +447,6 @@ def main():
         mid = cur.lastrowid
         if mode == "ATR":
             atr_meas.setdefault(key, mid)
-        data = open(r["full"], "rb").read()
-        cur.execute("INSERT INTO SpectralFile(MeasurementID,FilePath,FileType,FileSize,Checksum) VALUES (?,?,?,?,?)",
-                    (mid, r["path"], "dpt", len(data), hashlib.sha256(data).hexdigest()))
         added[(mats[key]["material_name"], mode)] += 1
 
     # ER-IR scans loaded earlier without a standard are linked now if one exists
@@ -472,21 +454,31 @@ def main():
     for key, am in atr_meas.items():
         if key in mat_id:
             cur.execute("UPDATE Measurement SET ReferenceMeasurementID=? WHERE ReferenceMeasurementID IS NULL AND "
-                        "AcquisitionModeID=? AND SpecimenID IN (SELECT SpecimenID FROM Specimen WHERE MaterialID=?)",
-                        (am, mode_id["ER-IR"], mat_id[key]))
+                        "InstrumentConfigurationID=? AND SpecimenID IN (SELECT SpecimenID FROM Specimen WHERE MaterialID=?)",
+                        (am, cfg_id["ER-IR"], mat_id[key]))
             relinked += cur.rowcount
 
-    # tag: materials with ER-IR scans but no ATR standard
-    cur.execute("INSERT OR IGNORE INTO Tag(TagLabel) VALUES (?)", (TAG_MISSING_ATR,))
-    tag_id = one("SELECT TagID FROM Tag WHERE TagLabel=?", (TAG_MISSING_ATR,))
-    cur.execute("DELETE FROM TaggedEntity WHERE TagID=? AND EntityType='Specimen'", (tag_id,))
-    cur.execute("""INSERT INTO TaggedEntity
-        SELECT ?, 'Specimen', s.SpecimenID FROM Specimen s WHERE s.MaterialID IN (
-          SELECT s2.MaterialID FROM Specimen s2 JOIN Measurement m USING(SpecimenID)
-          WHERE m.AcquisitionModeID=? AND s2.MaterialID IS NOT NULL
-            AND s2.MaterialID NOT IN (SELECT s3.MaterialID FROM Specimen s3 JOIN Measurement m3 USING(SpecimenID)
-                                      WHERE m3.AcquisitionModeID=? AND s3.MaterialID IS NOT NULL))""",
-                (tag_id, mode_id["ER-IR"], mode_id["ATR"]))
+    # tag: materials with ER-IR scans but no ATR standard.
+    # Only this script's own label is added or removed; labels typed by hand stay.
+    def tags_of(t):
+        return [x.strip() for x in (t or "").split(";") if x.strip()]
+    no_atr_mats = {r[0] for r in cur.execute(
+        """SELECT DISTINCT s.MaterialID FROM Specimen s JOIN Measurement m USING(SpecimenID)
+           JOIN InstrumentConfiguration c USING(InstrumentConfigurationID)
+           WHERE c.AcquisitionMode='ER-IR' AND s.MaterialID IS NOT NULL
+             AND s.MaterialID NOT IN (SELECT s3.MaterialID FROM Specimen s3 JOIN Measurement m3 USING(SpecimenID)
+                                      JOIN InstrumentConfiguration c3 USING(InstrumentConfigurationID)
+                                      WHERE c3.AcquisitionMode='ATR' AND s3.MaterialID IS NOT NULL)""")}
+    for sid_, mid_, tg in cur.execute("SELECT SpecimenID, MaterialID, Tags FROM Specimen").fetchall():
+        t = tags_of(tg)
+        want = mid_ in no_atr_mats
+        if want and TAG_MISSING_ATR not in t:
+            t.append(TAG_MISSING_ATR)
+        elif not want and TAG_MISSING_ATR in t:
+            t.remove(TAG_MISSING_ATR)
+        else:
+            continue
+        cur.execute("UPDATE Specimen SET Tags=? WHERE SpecimenID=?", (";".join(t) or None, sid_))
 
     # ---- checks ----
     fk = cur.execute("PRAGMA foreign_key_check").fetchall()
@@ -496,12 +488,11 @@ def main():
     n_meas = one("SELECT COUNT(*) FROM Measurement")
     n_linked = one("SELECT COUNT(*) FROM Measurement WHERE ReferenceMeasurementID IS NOT NULL")
     per_mat = cur.execute("""
-        SELECT mat.MaterialName, SUM(am.ModeName='ER-IR'), SUM(am.ModeName='ATR'), COUNT(DISTINCT s.SpecimenID)
+        SELECT mat.MaterialName, SUM(c.AcquisitionMode='ER-IR'), SUM(c.AcquisitionMode='ATR'), COUNT(DISTINCT s.SpecimenID)
         FROM Measurement m JOIN Specimen s USING(SpecimenID) JOIN Material mat USING(MaterialID)
-        JOIN AcquisitionModeType am USING(AcquisitionModeID) GROUP BY mat.MaterialName ORDER BY 1""").fetchall()
-    no_atr = [r[0] for r in cur.execute(
-        "SELECT DISTINCT mat.MaterialName FROM TaggedEntity te JOIN Specimen s ON s.SpecimenID=te.EntityID "
-        "JOIN Material mat USING(MaterialID) WHERE te.TagID=?", (tag_id,))]
+        JOIN InstrumentConfiguration c USING(InstrumentConfigurationID) GROUP BY mat.MaterialName ORDER BY 1""").fetchall()
+    no_atr = sorted(r[0] for r in cur.execute(
+        "SELECT MaterialName FROM Material WHERE MaterialID IN (%s)" % ",".join(str(i) for i in no_atr_mats or [0])))
 
     # ---- report ----
     L = ["# Import report\n"]

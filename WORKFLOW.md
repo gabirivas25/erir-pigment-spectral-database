@@ -19,15 +19,15 @@ The program needs four things, all in this repository:
 
 | Information | Where it comes from |
 |---|---|
-| The spectrum, file path, size, checksum | The `.dpt` file |
+| The spectrum, file path, checksum | The `.dpt` file |
 | ER-IR or ATR | The filename (see **Naming your files**) |
 | Material and specimen number | The filename |
 | Link from an ER-IR scan to its ATR standard | Found automatically: same material |
 | Material name, formula, synthetic or not, description | `materials.csv` |
-| Source, specimen type, specimen notes | `materials.csv` |
+| Source (`SpecimenSource`), specimen type, preparation notes | `materials.csv` |
 | Scan date (`ScanDate`) | `scan_batches.csv`, by the folder the scan is in |
 | Operator | `scan_batches.csv`, by the folder the scan is in. The person must be in `operators.csv` |
-| Instrument (Bruker LUMOS II), scan settings (ER-IR: 4 cm-1, 64 scans, ZnSe, 30 um aperture; ATR: 4 cm-1, 32 scans, ZnSe), site (Laboratory), intensity mode (Absorbance) | Fixed in the program: the standard setup, the same for every operator. If some scans used other settings, see **A scan used different settings from the standard** |
+| Instrument (Bruker LUMOS II), scan settings (ER-IR: 4 cm-1, 64 scans, ZnSe, LN-MCT detector, 30 um aperture; ATR: 4 cm-1, 32 scans, ZnSe, LN-MCT detector, germanium crystal), acquisition mode (ER-IR or ATR, set by the filename), intensity mode (Absorbance) | Fixed in the program: the standard setup, the same for every operator. If some scans used other settings, see **A scan used different settings from the standard** |
 | Notes, coordinates, images | Not filled in. Type them into the database by hand if you want them (see **Finding and editing one scan by hand**) |
 
 ---
@@ -90,7 +90,7 @@ python3 import_scans.py scans pigment_spectral_standards.db --dry-run
 
 `--dry-run` means "show me what you would do, but save nothing". After a few seconds a report appears. The third line should say something like:
 
-> DRY RUN, nothing saved. **0 scans added**, 256 skipped because they were already in the database.
+> DRY RUN, nothing saved. **0 scans added**, 307 skipped because they were already in the database.
 
 If you see that, setup is finished. If you see an error, copy the whole message and send it to Claude.
 
@@ -188,10 +188,10 @@ Example: a new mineral, realgar, with two ER-IR scans (specimen 1) and one ATR s
    | `chemical_formula` | Plain text, numbers written inline, no subscripts | `As4S4` |
    | `is_synthetic` | `Y` if synthetic, `N` if natural | `N` |
    | `description` | A short description, or leave empty | `Arsenic sulfide` |
-   | `source` | Who supplied it: `UniPD mineral collection`, `Kremer`, `Maimeri`, or a new name. Empty = not recorded | `UniPD mineral collection` |
-   | `specimen_type` | Exactly one of: `powder pigment`, `ground mineral`, `mineral fragment` | `ground mineral` |
+   | `source` | Who supplied it, as free text: `UniPD mineral collection`, `Kremer`, `Maimeri`, or a new name. Empty = not recorded | `UniPD mineral collection` |
+   | `specimen_type` | Free text. The current types are `powder pigment`, `ground mineral` and `mineral fragment`. Use the same words so that the types stay comparable | `ground mineral` |
    | `preparation_notes` | For example `Ground/prepared for FTIR analysis`, or empty | `Ground/prepared for FTIR analysis` |
-   | `source_notes` | Product number or label text, or empty | |
+   | `source_notes` | Product number or label text, or empty. When it is filled in, it is stored as the specimen's source instead of `source` (type the supplier's name at its start) | |
    | `chemical_class` | The chemical class: `Carbonate`, `Oxide`, `Sulfide`, `Silicate` or `Acetate`, or empty | `Sulfide` |
 
    The whole line for realgar (commas between the columns; `source_notes` is empty, so two commas sit side by side):
@@ -282,10 +282,9 @@ The program skips any file whose path is already in the database, so a corrected
 
 1. Open `pigment_spectral_standards.db` in DB Browser for SQLite.
 2. Click the **Execute SQL** tab.
-3. Delete everything in the box and paste the two lines below, changing only the file path in the first line to the scan you are replacing:
+3. Delete everything in the box and paste the line below, changing only the file path to the scan you are replacing:
    ```sql
-   DELETE FROM SpectralFile WHERE FilePath = 'oxides/hematite_ER_IR_2_3.dpt';
-   DELETE FROM Measurement WHERE MeasurementID NOT IN (SELECT MeasurementID FROM SpectralFile);
+   DELETE FROM Measurement WHERE FilePath = 'oxides/hematite_ER_IR_2_3.dpt';
    ```
 4. Click the **play button** (the triangle) above the box. You should see `Execution finished without errors`.
 5. Click **Write Changes** (top bar) or press Ctrl+S (Command+S on Mac). **This step is easy to forget, and without it nothing is saved.**
@@ -301,12 +300,11 @@ The ER-IR scans must be unlinked first, then the old ATR is removed, then the ne
 
 1. Find the old ATR's `MeasurementID` in the **Execute SQL** tab:
    ```sql
-   SELECT MeasurementID, FilePath FROM SpectralFile WHERE FilePath LIKE '%ultramarine_ATR%';
+   SELECT MeasurementID, FilePath FROM Measurement WHERE FilePath LIKE '%ultramarine_ATR%';
    ```
-2. Run these three lines, changing the number 13 to that `MeasurementID` in all three:
+2. Run these two lines, changing the number 13 to that `MeasurementID` in both:
    ```sql
    UPDATE Measurement SET ReferenceMeasurementID = NULL WHERE ReferenceMeasurementID = 13;
-   DELETE FROM SpectralFile WHERE MeasurementID = 13;
    DELETE FROM Measurement WHERE MeasurementID = 13;
    ```
 3. Click **Write Changes**, then close DB Browser.
@@ -336,7 +334,7 @@ When the person who runs the database changes, see [`HANDOVER.md`](HANDOVER.md).
 
 ## Workflow 6: Scans that are not standards (real objects, unknown specimens)
 
-**Not covered yet.** The program handles standards, where the material is always known. A scan from a real object needs a specimen with no material, an Object, a Collection and spot descriptions, and its identification is written later by the matching software. When you have such scans, the program needs a new mode. Ask Claude.
+**Not covered yet.** The program handles standards, where the material is always known. The database holds reference scans only. A scan from a real object is outside its scope, and the matching results are not stored. When you have such scans, the design and the program need a new extension. Ask Claude.
 
 ---
 
@@ -418,9 +416,9 @@ If many files have the wrong pattern (for example `hematite2.16.dpt`), rename th
 
 ## A file was already loaded under a wrong name
 
-**What you see:** the report said the file was added, but you now see that the material, the specimen number or ER-IR/ATR in its name was wrong. The old name is stored in the database (table `SpectralFile`, column `FilePath`).
+**What you see:** the report said the file was added, but you now see that the material, the specimen number or ER-IR/ATR in its name was wrong. The old name is stored in the database (table `Measurement`, column `FilePath`).
 
-**What to do:** delete the scan with the two SQL lines in **Workflow 4**, using the old path, rename the file in the `scans` folder, and run the program again. Do not delete an ATR standard while ER-IR scans are linked to it.
+**What to do:** delete the scan with the SQL line in **Workflow 4**, using the old path, rename the file in the `scans` folder, and run the program again. Do not delete an ATR standard while ER-IR scans are linked to it.
 
 ## A file is not in absorbance
 
@@ -454,9 +452,8 @@ The program converts each point while loading and stores the absorbance. The ori
 
 **After loading by mistake:** use this query in the **Execute SQL** tab to list scans with values outside the normal range:
 ```sql
-SELECT sf.FilePath, MIN(json_extract(j.value,'$[1]')) AS lowest, MAX(json_extract(j.value,'$[1]')) AS highest
-FROM Measurement m
-JOIN SpectralFile sf ON sf.MeasurementID = m.MeasurementID, json_each(m.SpectrumData) j
+SELECT m.FilePath, MIN(json_extract(j.value,'$[1]')) AS lowest, MAX(json_extract(j.value,'$[1]')) AS highest
+FROM Measurement m, json_each(m.SpectrumData) j
 GROUP BY m.MeasurementID
 HAVING highest > 10 OR lowest < -2
 ORDER BY highest DESC;
@@ -485,31 +482,16 @@ The naming rules treat powders as synthetic pigments, so they do not cover this 
 
 ## Finding and editing one scan by hand
 
-Use this to type a value into a scan that is already loaded, for example a note, a spot description or an image reference. The `Measurement` table has no file name column, so first find the scan's `MeasurementID`.
+Use this to type a value into a scan that is already loaded, for example a note, a spot description or an image reference. The file name is stored in the `Measurement` table, in the column `FilePath`.
 
-**Step 1: Find the MeasurementID.** Use either way.
-
-*Way 1: the SpectralFile table (no SQL).*
+**Step 1: Find the scan.**
 1. Open `pigment_spectral_standards.db` in DB Browser and click the **Browse Data** tab.
-2. In the **Table** menu, choose **SpectralFile**.
+2. In the **Table** menu, choose **Measurement**.
 3. Type part of the file name, for example `calcite_ER_IR_1_3`, in the filter box under **FilePath**. One row should remain.
-4. Read the number in the **MeasurementID** column of that row. Do not use the **FileID** column: it is a different number.
 
-*Way 2: one query in Execute SQL.*
-1. Click the **Execute SQL** tab.
-2. Paste this and change the file name:
-   ```sql
-   SELECT m.MeasurementID, f.FilePath
-   FROM Measurement m JOIN SpectralFile f ON f.MeasurementID = m.MeasurementID
-   WHERE f.FilePath LIKE '%calcite_ER_IR_1_3%';
-   ```
-3. Click the play button above the query, or press Command+Return (Ctrl+Return on Windows). The `MeasurementID` and the file path appear in the table below the query.
+The stored path includes the folder, so type only the part of the name you are sure of.
 
-Keep the `%` signs before and after the name. They mean "anything here", so the search works even though the stored path includes the folder.
-
-**Step 2: Show only that scan.** Click **Browse Data** and choose the table **Measurement**. In the filter box under **MeasurementID**, type `=` and the number, with no space, for example `=87`. Without the `=`, the filter also shows every ID that contains 87, such as 187 and 287.
-
-**Step 3: Type the value.** Double-click the cell, for example under `Notes`. Type the text in the **Edit Database Cell** pane on the right and click **Apply**. Then click **Write Changes** (Command+S, or Ctrl+S on Windows). To throw the change away instead, click **Revert Changes**. Nothing is saved until you write the changes.
+**Step 2: Type the value.** Double-click the cell, for example under `Notes`. Type the text in the **Edit Database Cell** pane on the right and click **Apply**. Then click **Write Changes** (Command+S, or Ctrl+S on Windows). To throw the change away instead, click **Revert Changes**. Nothing is saved until you write the changes.
 
 **Filters stay on.** A filter keeps filtering until you delete its text, and several filters work together: a row must match all of them. If rows seem to be missing, clear every filter box in the table first, including the ones to the right.
 
@@ -525,24 +507,24 @@ The program gives every ER-IR scan the standard settings (4 cm-1, 64 scans) and 
 3. Click the **New Record** button above the table. Fill in the new row:
    - `InstrumentID`: required. Use `1` for the LUMOS II. The numbers are in the **Instrument** table.
    - `Resolution` and `NumberOfScans`: the values you used, for example `4 cm-1` and `32`.
-   - `BeamSplitterType` and `ApertureSize`: the same as the standard row, unless they also changed.
+   - `AcquisitionMode`: required. Type `ER-IR` or `ATR`; nothing else is accepted. It must match the mode of the scans you point to this row.
+   - `BeamSplitterType`, `Detector` and `ApertureSize`: the same as the standard row, unless they also changed.
    - `Notes`: anything unusual, for example `Positioning speed: medium. Pressure: low.`
 4. Read the new row's number in the **InstrumentConfigurationID** column. You need it in the next step.
 
 **Step 2: Point the scans to the new settings.**
 
-*For one scan.* Find its `MeasurementID` (see **Finding and editing one scan by hand**). In the **Measurement** table, double-click the `InstrumentConfigurationID` cell and type the new number. Click **Apply** in the **Edit Database Cell** pane.
+*For one scan.* Find the scan (see **Finding and editing one scan by hand**). In the **Measurement** table, double-click the `InstrumentConfigurationID` cell and type the new number. Click **Apply** in the **Edit Database Cell** pane.
 
 *For a whole folder.* Click the **Execute SQL** tab. First check which scans a name matches. Change the folder name:
 ```sql
-SELECT m.MeasurementID, f.FilePath
-FROM Measurement m JOIN SpectralFile f ON f.MeasurementID = m.MeasurementID
-WHERE f.FilePath LIKE '%my_folder_name%';
+SELECT MeasurementID, FilePath FROM Measurement
+WHERE FilePath LIKE '%my_folder_name%';
 ```
 If the list is exactly the scans you want, run this. Change `3` to the new row's number, and use the same folder name:
 ```sql
 UPDATE Measurement SET InstrumentConfigurationID = 3
-WHERE MeasurementID IN (SELECT MeasurementID FROM SpectralFile WHERE FilePath LIKE '%my_folder_name%');
+WHERE FilePath LIKE '%my_folder_name%';
 ```
 
 **Step 3: Save.** Click **Write Changes** (Command+S, or Ctrl+S on Windows). To throw the change away instead, click **Revert Changes**. Close DB Browser before you run the program again. Then commit and push the database file in GitHub Desktop.
@@ -559,16 +541,17 @@ A new settings row is only needed once. Later scans with the same settings point
 |---|---|---|
 | Scan date | `Measurement`, `ScanDate` | The date as `2026-10-14` (year-month-day). This is the one place where the database form is typed. |
 | Operator | `Measurement`, `OperatorID` | The number of the person in the `Operator` table (look it up there) |
-| Source or product notes of a specimen | `Specimen`, `SourceNotes` | Free text, for example the label text |
+| Source or product notes of a specimen | `Specimen`, `SpecimenSource` | Free text, for example the label text |
 | Preparation | `Specimen`, `PreparationNotes` | Free text |
-| Specimen type | `Specimen`, `SpecimenTypeID` | `1` powder pigment, `2` ground mineral, `3` mineral fragment |
+| Specimen type | `Specimen`, `SpecimenType` | Free text. The current types are `powder pigment`, `ground mineral` and `mineral fragment` |
+| Tags of a specimen | `Specimen`, `Tags` | Labels separated by a semicolon, for example `needs-atr-recollection`. The program adds and removes only that one label |
 | Description, formula or class of a material | `Material`, `Description`, `ChemicalFormula`, `ChemicalClass` | Free text |
 
 **For a whole folder at once:** in the **Execute SQL** tab, change the folder name, date and operator number in this example, then run it and click **Write Changes**:
 ```sql
 UPDATE Measurement
 SET ScanDate = '2026-10-14', OperatorID = 1
-WHERE MeasurementID IN (SELECT MeasurementID FROM SpectralFile WHERE FilePath LIKE '14-10-2026/%');
+WHERE FilePath LIKE '14-10-2026/%';
 ```
 The text under `Execution finished` tells you how many rows were changed. If it says 0, the folder name is wrong.
 
