@@ -3,6 +3,7 @@
 
 Usage:
     python match_unknown.py FILE [--db pigment_spectral_standards.db] [--from-transmittance] [--top 5]
+                            [--prominence 0.5] [--spacing 20] [--tolerance 8]
     python match_unknown.py FOLDER            (matches every spectrum file in the folder, one table)
 
 FILE can be:
@@ -21,6 +22,11 @@ Methods (the same as the Match screen design):
            score = 2 * matched / (peaks in unknown + peaks in standard)
 A material's score is the best score among its ER-IR scans.
 A high score means a similar spectral shape, not a confirmed identification.
+
+The three peak settings (--prominence, --spacing, --tolerance) can be changed, and they change the
+result of the "peaks" method: a different setting can put a different material first. The defaults
+(0.5, 20, 8) were chosen for the prototype and were not tuned. The settings used are printed with every
+result; record them together with the result, so that it can be repeated.
 """
 import argparse, json, os, re, sqlite3, sys
 import numpy as np
@@ -28,6 +34,10 @@ from scipy.signal import savgol_filter, find_peaks
 
 GRID = np.linspace(650.0, 3990.0, 800)
 STEP = GRID[1] - GRID[0]
+# Peak-matching settings of the "peaks" method. These are the defaults; --prominence, --spacing and
+# --tolerance on the command line replace them. They change the result, so they are printed with it.
+SETTINGS = {"prominence": 0.5, "spacing": 20.0, "tolerance": 8.0}
+DEFAULTS = dict(SETTINGS)
 NAME_RE = re.compile(r"^(?P<key>.+?)_ER_IR_(?P<rest>[\d_]+)$", re.I)
 
 
@@ -98,11 +108,14 @@ def prep(a, method):
 
 
 def peaks_of(a):
-    p, _ = find_peaks(a, prominence=0.5, distance=max(1, int(round(20 / STEP))))
+    p, _ = find_peaks(a, prominence=SETTINGS["prominence"],
+                      distance=max(1, int(round(SETTINGS["spacing"] / STEP))))
     return GRID[p]
 
 
-def peak_score(pu, ps, tol=8.0):
+def peak_score(pu, ps, tol=None):
+    if tol is None:
+        tol = SETTINGS["tolerance"]
     if len(pu) + len(ps) == 0:
         return 0.0
     used, m = set(), 0
@@ -167,6 +180,7 @@ def run_folder(folder, std, from_transmittance, top):
     add_cache(std)
     print("Folder: %s  (%d files)" % (folder, len(files)))
     print("Standards compared: %d ER-IR scans" % len(std))
+    print(settings_line())
     print("Each cell: material score. Top %d per method. The database is not changed.\n" % top)
     first = {m: {} for m in ("pearson", "deriv", "peaks")}
     problems = []
@@ -194,6 +208,12 @@ def run_folder(folder, std, from_transmittance, top):
     print("\nA high score means a similar spectral shape, not a confirmed identification.")
 
 
+def settings_line():
+    changed = "" if SETTINGS == DEFAULTS else "  (changed from the defaults 0.5, 20, 8)"
+    return ("Peak settings: prominence %g, spacing %g cm-1, tolerance %g cm-1%s"
+            % (SETTINGS["prominence"], SETTINGS["spacing"], SETTINGS["tolerance"], changed))
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(description="Match an unknown spectrum against the ER-IR standards.")
@@ -201,7 +221,16 @@ def main():
     ap.add_argument("--db", default=os.path.join(here, "pigment_spectral_standards.db"))
     ap.add_argument("--from-transmittance", action="store_true", help="file is in %%T; convert to absorbance")
     ap.add_argument("--top", type=int, default=5)
+    ap.add_argument("--prominence", type=float, default=DEFAULTS["prominence"],
+                    help="peak method: minimum height of a peak above its surroundings, in SNV units (default 0.5)")
+    ap.add_argument("--spacing", type=float, default=DEFAULTS["spacing"],
+                    help="peak method: minimum distance between two peaks, in cm-1 (default 20)")
+    ap.add_argument("--tolerance", type=float, default=DEFAULTS["tolerance"],
+                    help="peak method: largest difference in cm-1 for two peaks to count as the same (default 8)")
     a = ap.parse_args()
+    if a.prominence <= 0 or a.spacing <= 0 or a.tolerance < 0:
+        sys.exit("--prominence and --spacing must be above 0, and --tolerance must not be negative")
+    SETTINGS.update(prominence=a.prominence, spacing=a.spacing, tolerance=a.tolerance)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     std = load_standards(a.db)
@@ -211,6 +240,7 @@ def main():
     x, y = read_spectrum(a.file, a.from_transmittance)
     print("File: %s  (%d points, %.0f to %.0f cm-1)" % (os.path.basename(a.file), len(x), x.min(), x.max()))
     print("Standards compared: %d ER-IR scans" % len(std))
+    print(settings_line())
     g = resample(x, y)
     for method in ("pearson", "deriv", "peaks"):
         print("\n== %s ==" % method)

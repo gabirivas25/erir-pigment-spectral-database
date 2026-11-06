@@ -6,7 +6,7 @@ These scripts repeat the tests reported in Chapters 3 and 4 and Appendix D of th
 
 **Requirements:** Python 3, `numpy`, `scipy`. Run each script from the repository folder with `python3 -I analysis_scripts/SCRIPT DATABASE`. Scripts that use the 15 layered mock-up scans (tav_2, tav_5, tav_8) take a second argument, the path to those `.dpt` files in quotes, for example `'tav_scans/*.dpt'`. The mock-up scans are not stored in this repository.
 
-**Settings kept fixed** (as in `match_unknown.py`): 800-point grid from 650 to 3990 cm-1; standard normal variate; Savitzky-Golay first derivative, window 11, order 2; Pearson correlation; peaks found with prominence 0.5 and spacing 20 cm-1, matched within 8 cm-1. A material's score is the best score among its scans. Materials with equal scores are ordered by the position of their standards in the database. Synthetic malachite is counted as malachite.
+**Settings kept fixed** (the defaults of `match_unknown.py`; the peak settings can be changed there with `--prominence`, `--spacing` and `--tolerance`, and the scripts that test them set their own values): 800-point grid from 650 to 3990 cm-1; standard normal variate; Savitzky-Golay first derivative, window 11, order 2; Pearson correlation; peaks found with prominence 0.5 and spacing 20 cm-1, matched within 8 cm-1. A material's score is the best score among its scans. Materials with equal scores are ordered by the position of their standards in the database. Synthetic malachite is counted as malachite.
 
 | Script | What it tests | Extra argument |
 |---|---|---|

@@ -61,7 +61,7 @@ A new operator should use the same setup. If the instrument or the settings ever
 | `pigment_spectral_standards.db` | The database (SQLite) | The import program; by hand only for corrections (`WORKFLOW.md`, Workflow 4) |
 | `scans/` | The `.dpt` scan files, the original data | Add new files in a new dated folder. Never edit or delete old ones |
 | `import_scans.py` | The program that adds scans to the database | Only when the setup or the rules change |
-| `match_unknown.py` | Tries to identify an unknown spectrum by comparing it with the database (read-only) | Only if the matching method changes |
+| `match_unknown.py` | Tries to identify an unknown spectrum by comparing it with the database (read-only). The three peak settings can be changed on the command line and are printed with every result | Only if the matching method changes |
 | `database_summary.py` | Prints what is in the database (materials, scan counts); a check that the database opens | Never, unless the schema changes |
 | `materials.csv` | One line per material: name, formula, source, specimen type | Add a line for each new material |
 | `scan_batches.csv` | Date, operator and (optionally) unit of each folder of scans | Add a line for each new folder; fill in `intensity` only if the folder is not absorbance |

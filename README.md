@@ -134,7 +134,7 @@ WHERE s.Tags IS NOT NULL;
 
 **Setup and running.** Install the packages once: `python3 -m pip install numpy scipy brukeropus` (on Windows: `py -m pip install numpy scipy brukeropus`; on a Mac use `python3 -m pip`, because the plain `pip` command may not exist). `brukeropus` is only needed for Bruker OPUS binary `.dpt` files. Then, from the folder that contains the script and the database, run `python3 match_unknown.py PATH_TO_FILE` (Windows: `py match_unknown.py PATH_TO_FILE`). To match a whole folder, give the folder instead of a file (for example `python3 match_unknown.py scans/unknown`); it prints the top 3 materials per method for each file and counts the first places. A file it cannot read is listed at the end. The file can be anywhere on the computer; put its path in quotes if it contains spaces. To see what is in the database, run `python3 database_summary.py` (Windows: `py database_summary.py`).
 
-The script compares one unknown spectrum with the 288 ER-IR standards in the database and ranks the materials. It only reads the database; it never changes it. Nothing inside the script has to be edited to test a new spectrum: the file name and options go on the command line (`--from-transmittance`, `--top N`, `--db PATH`).
+The script compares one unknown spectrum with the 288 ER-IR standards in the database and ranks the materials. It only reads the database; it never changes it. Nothing inside the script has to be edited to test a new spectrum: the file name and options go on the command line (`--from-transmittance`, `--top N`, `--db PATH`, and the three peak settings `--prominence`, `--spacing` and `--tolerance`, described below).
 
 1. **Read the unknown file** (`read_spectrum`). Text files, Perkin-Elmer `.ASC` files (data after a `#DATA` line) and Bruker OPUS binary `.dpt` files (needs `brukeropus`) are accepted. The points are sorted by wavenumber. With `--from-transmittance`, %T is converted to absorbance (2 - log10 %T). This conversion is for trying things out only; the database never converts spectra.
 2. **Put it on a common grid** (`resample`). The unknown must cover 700 to 3900 cm-1. It is interpolated onto 800 evenly spaced points from 650 to 3990 cm-1 (about 4.2 cm-1 apart), the same grid used for the standards.
@@ -143,10 +143,30 @@ The script compares one unknown spectrum with the 288 ER-IR standards in the dat
 5. **Score with three methods** (`rank`):
    - `pearson`: Pearson correlation of the SNV spectra.
    - `deriv`: Savitzky-Golay first derivative (smoothing window of 11 points, about 42 cm-1, fitted with a quadratic), then SNV, then Pearson. This removes baseline slope and tilt and emphasizes band positions.
-   - `peaks`: SNV, find peaks (at least 0.5 SNV units high, at least 20 cm-1 apart), match peaks within 8 cm-1 (each used once). Score = 2 x matched / (peaks in unknown + peaks in standard).
+   - `peaks`: SNV, find peaks (at least 0.5 SNV units high, at least 20 cm-1 apart), match peaks within 8 cm-1 (each used once). Score = 2 x matched / (peaks in unknown + peaks in standard). These three numbers are the peak settings; see the next section.
 6. **Rank materials.** A material's score is the best score among its ER-IR scans. The top results are printed for each method.
 
-The settings in steps 2 and 5 (range check, window, prominence, spacing, tolerance) are design choices for this prototype; they were not tuned or validated against the literature. A high score means a similar spectral shape, not a confirmed identification. Spectra from other instruments or measurement types (ATR, transmission), and materials with few bands between 650 and 3990 cm-1 (such as cinnabar and orpiment), match poorly.
+The settings in steps 2 and 5 (range check, window, prominence, spacing, tolerance) are design choices for this prototype; they were not tuned or validated against the literature. The three peak settings can be changed on the command line (next section). A high score means a similar spectral shape, not a confirmed identification. Spectra from other instruments or measurement types (ATR, transmission), and materials with few bands between 650 and 3990 cm-1 (such as cinnabar and orpiment), match poorly.
+
+## The peak settings can be changed, and they change the result
+
+The `peaks` method does not compare the whole curve. It finds the peaks of the unknown spectrum and of each standard, and counts how many of them lie at the same wavenumber. Three settings decide what counts:
+
+| Setting | Option | Default | What it does |
+|---|---|---|---|
+| Prominence | `--prominence` | 0.5 | How far a peak must stand out from its surroundings, in SNV units. A higher value keeps only the strongest peaks, a lower value also keeps small ones |
+| Spacing | `--spacing` | 20 | The smallest distance between two peaks, in cm-1. Peaks closer than this are merged into the stronger one |
+| Tolerance | `--tolerance` | 8 | How far apart, in cm-1, a peak of the unknown and a peak of a standard can be and still count as the same peak |
+
+**These settings affect the results.** A different value can change which material is ranked first, and the order of the materials after it. The defaults were chosen for the prototype and were not tuned, so they are not the "right" values for every spectrum. The thesis tested them (Chapter 4, section on the sensitivity of peak-position matching); the test scripts are in [`analysis_scripts/`](analysis_scripts/).
+
+**Record the settings with every result.** The program prints the settings it used on the third line of its output, and says when they differ from the defaults. Copy that line into your notes or report with the result. A ranking cannot be repeated or checked without the settings that produced it. The `pearson` and `deriv` methods do not use these three settings.
+
+Example:
+
+```
+python3 match_unknown.py my_spectrum.dpt --prominence 1.0 --spacing 20 --tolerance 12
+```
 
 ## Testing the matching methods
 

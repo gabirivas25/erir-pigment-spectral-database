@@ -584,3 +584,4 @@ The scripts in `analysis_scripts/` repeat the tests reported in the thesis. Run 
 
 `analysis_scripts/time_matcher.py` imports `match_unknown.py` from the repository, so run it from the repository folder.
 
+The test scripts keep the default peak settings (prominence 0.5, spacing 20 cm-1, tolerance 8 cm-1) unless a script says otherwise. These settings change the results of the peak-position method, and `match_unknown.py` can change them (`--prominence`, `--spacing`, `--tolerance`; see `README.md`). Whenever you report a result from the peak-position method, write down the settings used. The program prints them in its output.
