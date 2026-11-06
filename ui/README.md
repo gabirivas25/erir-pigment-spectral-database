@@ -2,7 +2,7 @@
 
 A design for the web interface described in Chapter 5 of the thesis. It is a mock-up: four static pages with example data, no server and no matching. The interface itself has not been built.
 
-**To look at it:** open `materials.html` in a web browser. The pages link to each other: the menu has Materials, Scans and Match. A material name on the Materials page opens the Scans page, and a file name there opens the scan viewer. Fonts load from Google Fonts; without a connection the browser uses its default font.
+**To look at it:** open `materials.html` in a web browser. The pages link to each other: the menu has Materials, Scans and Match. A material name or its scan count on the Materials page opens the Scans page, and a file name there opens the scan viewer. Fonts load from Google Fonts; without a connection the browser uses its default font.
 
 | Page | File | Figure in the thesis |
 |---|---|---|
