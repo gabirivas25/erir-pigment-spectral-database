@@ -565,3 +565,22 @@ Do not edit `SpectrumData`, `FilePath`, `Checksum` or `ReferenceMeasurementID` b
 ## The program stops with an error
 
 Nothing is saved when the program stops (a run is all or nothing). Read the last line of the message: it names the file and the row. The usual causes are a date that is not `DD-MM-YYYY`, an operator not listed in `operators.csv`, or a sheet opened and saved in Excel. Fix the sheet and run again.
+
+---
+
+# Part 6: Running the matching tests again
+
+The scripts in `scripts/` repeat the tests reported in the thesis. Run them again whenever scans are added, because the numbers in the tables depend on which standards are in the database. They only read the database and never change it.
+
+1. Open a Terminal in the repository folder (Part 1, Step 3) and check that the packages are installed: `python3 -m pip install numpy scipy`.
+2. Run one script. The first argument is always the database. The tests that use the layered mock-ups (`tav_` scripts and `start600_test.py`) also need the folder with the 15 mock-up scans, in quotes, as a second argument:
+   ```
+   python3 -I scripts/start600_test.py pigment_spectral_standards.db 'path/to/tav_scans/*.dpt'
+   python3 -I scripts/peak_settings_grid.py pigment_spectral_standards.db
+   ```
+   On Windows use `py -I` instead of `python3 -I`. The full list, with the second argument each script needs, is in `scripts/README.md`.
+3. Copy the numbers into the thesis tables by hand. The scripts print results to the screen; `peak_settings_grid.py` also writes `peak_settings_grid.json` in the folder where you ran it, and the other scripts write their `.json` file the same way. Do not commit these output files unless you want to keep them.
+4. If the number of standards changed, check the counts that the thesis states (for example 221 and 67 scans) against the first lines the scripts print.
+
+`scripts/time_matcher.py` imports `match_unknown.py` from the repository, so run it from the repository folder.
+

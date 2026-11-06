@@ -1,0 +1,4 @@
+const unk=ER.map(p=>[p[0],p[1]*0.85+0.15+0.03*Math.sin(p[0]/23)]),W=640,H=190;
+function panel(y0,d,col,lab){return grid(W,y0,H,2)+`<path d="${path(snv(d),W,y0,H,-5,5)}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round"/><text x="8" y="${y0+16}" font-family="IBM Plex Sans,sans-serif" font-size="13" font-weight="500" fill="${col}">${lab}</text>`+yl(y0,H,-5,5,[-4,0,4],v=>v)}
+const y=2*H+24;
+document.getElementById('p').innerHTML='<g transform="translate(56,12)">'+panel(0,unk,'#9b0014','Your spectrum')+panel(H+24,ER,'#4aa8d6','Calcite, calcite_ER_IR_1_3')+xl(W,y+20)+`<text x="320" y="${y+48}" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="13">Wavenumber (cm-1)</text><text transform="translate(-42,${y/2}) rotate(-90)" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="13">Normalized absorbance (SNV)</text></g>`;

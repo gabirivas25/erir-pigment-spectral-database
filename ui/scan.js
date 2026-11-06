@@ -1,0 +1,8 @@
+const W=848,PH=165,y1=PH+28;
+function vp(y0,d,col,hi,ticks,lab,lc){return grid(W,y0,PH,ticks.length-1)+`<path d="${path(d,W,y0,PH,0,hi)}" fill="none" stroke="${col}" stroke-width="2.25" stroke-linejoin="round"/>`+yl(y0,PH,0,hi,ticks,v=>v)+`<text transform="translate(-44,${y0+PH/2}) rotate(-90)" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="13" fill="${lc}">${lab}</text>`}
+const at=(d,w)=>d.reduce((a,b)=>Math.abs(b[0]-w)<Math.abs(a[0]-w)?b:a),cx=X(1418,W);
+const ye=PH-at(ER,1418)[1]/2.5*PH,ya=y1+PH-at(ATR,1418)[1]/0.8*PH;
+document.getElementById('p').innerHTML='<g transform="translate(56,16)">'+vp(0,ER,'#6EC1E8',2.5,[0,0.5,1,1.5,2,2.5],'ER-IR absorbance','#1c2128')+vp(y1,ATR,'#a3abb1',0.8,[0,0.2,0.4,0.6,0.8],'ATR absorbance','#4a5159')
++`<line x1="${cx}" y1="0" x2="${cx}" y2="${y1+PH}" stroke="#9b0014" stroke-dasharray="4 4"/><circle cx="${cx}" cy="${ye}" r="4.5" fill="#6EC1E8" stroke="#fff" stroke-width="2"/><circle cx="${cx}" cy="${ya}" r="4.5" fill="#8d959b" stroke="#fff" stroke-width="2"/>`
++`<g transform="translate(${cx-196},${y1+14})"><rect width="176" height="72" rx="6" fill="#1c2128"/><text x="12" y="22" fill="#fff" font-family="IBM Plex Mono,monospace" font-size="13" font-weight="500">1418 cm-1</text><text x="12" y="44" fill="#d5d8dc" font-family="IBM Plex Sans,sans-serif" font-size="12">ER-IR  ${at(ER,1418)[1].toFixed(3)}</text><text x="12" y="62" fill="#d5d8dc" font-family="IBM Plex Sans,sans-serif" font-size="12">ATR     ${at(ATR,1418)[1].toFixed(3)}</text></g>`
++xl(W,y1+PH+20)+`<text x="424" y="${y1+PH+48}" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="13">Wavenumber (cm-1)</text></g>`;

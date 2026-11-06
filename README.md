@@ -9,7 +9,7 @@ Thesis advisors: Professor Alfonso Zoleo (Chemistry) and Professor Nicola Orio (
 
 A reference database of external reflectance infrared (ER-IR) scans, each paired with the attenuated total reflectance (ATR) standard of the same material. The ER-IR scans are the kind of spectrum that can be taken non-invasively on a real object; the ATR standards are the reference they are compared with. Spectra were measured on a Bruker LUMOS II FT-IR microscope.
 
-**Status:** schema version 5 (6 tables), loaded from the re-exported absorbance scans. The database holds 307 measurements (288 ER-IR and 19 ATR) of 20 materials on 42 specimens. 266 of the ER-IR scans are linked to the ATR standard of the same material. Magnetite has no ATR standard yet and is tagged `needs-atr-recollection`. Files from the earlier version of the project are in [`Archived/`](Archived/).
+**Status:** schema version 5 (6 tables), loaded from the re-exported absorbance scans. The database holds 307 measurements (288 ER-IR and 19 ATR) of 20 materials on 42 specimens. 266 of the ER-IR scans are linked to the ATR standard of the same material. Magnetite has no ATR standard yet and is tagged `needs-atr-recollection`. Files from the earlier version of the project are in [`Archived/`](Archived/). The tests of the matching methods are in [`scripts/`](scripts/), and the thesis tables and appendices are in [`thesis/`](thesis/).
 
 ## Files
 
@@ -32,6 +32,9 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 | `pigment_spectral_standards_sqlite_schema.sql` | Creates an empty database in SQLite |
 | `pigment_spectral_standards_mysql_schema.sql` | The same design for MySQL 8 (schema only) |
 | `ER_Diagram.png` | Entity-relationship diagram of the 6 tables |
+| `scripts/` | The scripts of the matching tests reported in the thesis (leave-one-out tests, spectral regions, grid start, peak settings, run time), and `scripts/earlier_work/` for the earlier plotting and exploratory scripts. See [`scripts/README.md`](scripts/README.md) |
+| `ui/` | Mock-up of the web interface described in the thesis (Chapter 5): three static pages and their screenshots. A design, not a working application. See [`ui/README.md`](ui/README.md) |
+| `thesis/` | Word files of the tables and appendices written for the thesis (Tables 2.X, 4.5 to 4.11, Appendices A to G) and the reference list draft. See [`thesis/README.md`](thesis/README.md) |
 | `Archived/` | The earlier schema, its data and the analysis scripts that used it |
 
 ## How to open it, for non-technical readers
@@ -131,7 +134,7 @@ WHERE s.Tags IS NOT NULL;
 
 **Setup and running.** Install the packages once: `python3 -m pip install numpy scipy brukeropus` (on Windows: `py -m pip install numpy scipy brukeropus`; on a Mac use `python3 -m pip`, because the plain `pip` command may not exist). `brukeropus` is only needed for Bruker OPUS binary `.dpt` files. Then, from the folder that contains the script and the database, run `python3 match_unknown.py PATH_TO_FILE` (Windows: `py match_unknown.py PATH_TO_FILE`). To match a whole folder, give the folder instead of a file (for example `python3 match_unknown.py scans/unknown`); it prints the top 3 materials per method for each file and counts the first places. A file it cannot read is listed at the end. The file can be anywhere on the computer; put its path in quotes if it contains spaces. To see what is in the database, run `python3 database_summary.py` (Windows: `py database_summary.py`).
 
-The script compares one unknown spectrum with the 242 ER-IR standards in the database and ranks the materials. It only reads the database; it never changes it. Nothing inside the script has to be edited to test a new spectrum: the file name and options go on the command line (`--from-transmittance`, `--top N`, `--db PATH`).
+The script compares one unknown spectrum with the 288 ER-IR standards in the database and ranks the materials. It only reads the database; it never changes it. Nothing inside the script has to be edited to test a new spectrum: the file name and options go on the command line (`--from-transmittance`, `--top N`, `--db PATH`).
 
 1. **Read the unknown file** (`read_spectrum`). Text files, Perkin-Elmer `.ASC` files (data after a `#DATA` line) and Bruker OPUS binary `.dpt` files (needs `brukeropus`) are accepted. The points are sorted by wavenumber. With `--from-transmittance`, %T is converted to absorbance (2 - log10 %T). This conversion is for trying things out only; the database never converts spectra.
 2. **Put it on a common grid** (`resample`). The unknown must cover 700 to 3900 cm-1. It is interpolated onto 800 evenly spaced points from 650 to 3990 cm-1 (about 4.2 cm-1 apart), the same grid used for the standards.
@@ -144,3 +147,7 @@ The script compares one unknown spectrum with the 242 ER-IR standards in the dat
 6. **Rank materials.** A material's score is the best score among its ER-IR scans. The top results are printed for each method.
 
 The settings in steps 2 and 5 (range check, window, prominence, spacing, tolerance) are design choices for this prototype; they were not tuned or validated against the literature. A high score means a similar spectral shape, not a confirmed identification. Spectra from other instruments or measurement types (ATR, transmission), and materials with few bands between 650 and 3990 cm-1 (such as cinnabar and orpiment), match poorly.
+
+## Testing the matching methods
+
+The scripts in [`scripts/`](scripts/) re-run the tests reported in the thesis on the database in this repository: leave-one-specimen-out and leave-one-scan-out tests, a grid starting at 600 cm-1, a grid search of the peak-position settings, tests on the 15 layered mock-up scans, and the run time of the matcher. Each script only reads the database. `scripts/README.md` lists what each script does, how to run it and which table of the thesis it feeds. The scripts keep the settings of `match_unknown.py`, so a change to the matcher means the tests should be run again.
