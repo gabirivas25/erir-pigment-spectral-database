@@ -1,8 +1,10 @@
-# Scripts: tests of the matching methods
+# Analysis scripts: tests of the matching methods
+
+**These are not the matching program.** The program that matches an unknown spectrum is `match_unknown.py` in the main folder of the repository. The scripts here only test how well the matching methods work, for the thesis. To match a spectrum, use `match_unknown.py`; nothing in this folder is needed for that.
 
 These scripts repeat the tests reported in Chapters 3 and 4 and Appendix D of the thesis. They use the database in this repository (schema v5: 288 ER-IR scans, 19 ATR scans, 20 materials) and the matching settings of `match_unknown.py`. They only read the database.
 
-**Requirements:** Python 3, `numpy`, `scipy`. Run each script from the repository folder with `python3 -I scripts/SCRIPT DATABASE`. Scripts that use the 15 layered mock-up scans (tav_2, tav_5, tav_8) take a second argument, the path to those `.dpt` files in quotes, for example `'tav_scans/*.dpt'`. The mock-up scans are not stored in this repository.
+**Requirements:** Python 3, `numpy`, `scipy`. Run each script from the repository folder with `python3 -I analysis_scripts/SCRIPT DATABASE`. Scripts that use the 15 layered mock-up scans (tav_2, tav_5, tav_8) take a second argument, the path to those `.dpt` files in quotes, for example `'tav_scans/*.dpt'`. The mock-up scans are not stored in this repository.
 
 **Settings kept fixed** (as in `match_unknown.py`): 800-point grid from 650 to 3990 cm-1; standard normal variate; Savitzky-Golay first derivative, window 11, order 2; Pearson correlation; peaks found with prominence 0.5 and spacing 20 cm-1, matched within 8 cm-1. A material's score is the best score among its scans. Materials with equal scores are ordered by the position of their standards in the database. Synthetic malachite is counted as malachite.
 

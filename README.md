@@ -9,7 +9,7 @@ Thesis advisors: Professor Alfonso Zoleo (Chemistry) and Professor Nicola Orio (
 
 A reference database of external reflectance infrared (ER-IR) scans, each paired with the attenuated total reflectance (ATR) standard of the same material. The ER-IR scans are the kind of spectrum that can be taken non-invasively on a real object; the ATR standards are the reference they are compared with. Spectra were measured on a Bruker LUMOS II FT-IR microscope.
 
-**Status:** schema version 5 (6 tables), loaded from the re-exported absorbance scans. The database holds 307 measurements (288 ER-IR and 19 ATR) of 20 materials on 42 specimens. 266 of the ER-IR scans are linked to the ATR standard of the same material. Magnetite has no ATR standard yet and is tagged `needs-atr-recollection`. Files from the earlier version of the project are in [`Archived/`](Archived/). The tests of the matching methods are in [`scripts/`](scripts/), and the thesis tables and appendices are in [`thesis/`](thesis/).
+**Status:** schema version 5 (6 tables), loaded from the re-exported absorbance scans. The database holds 307 measurements (288 ER-IR and 19 ATR) of 20 materials on 42 specimens. 266 of the ER-IR scans are linked to the ATR standard of the same material. Magnetite has no ATR standard yet and is tagged `needs-atr-recollection`. Files from the earlier version of the project are in [`Archived/`](Archived/). The tests of the matching methods are in [`analysis_scripts/`](analysis_scripts/), and the thesis tables and appendices are in [`thesis/`](thesis/).
 
 ## Files
 
@@ -32,7 +32,7 @@ A reference database of external reflectance infrared (ER-IR) scans, each paired
 | `pigment_spectral_standards_sqlite_schema.sql` | Creates an empty database in SQLite |
 | `pigment_spectral_standards_mysql_schema.sql` | The same design for MySQL 8 (schema only) |
 | `ER_Diagram.png` | Entity-relationship diagram of the 6 tables |
-| `scripts/` | The scripts of the matching tests reported in the thesis (leave-one-out tests, spectral regions, grid start, peak settings, run time), and `scripts/earlier_work/` for the earlier plotting and exploratory scripts. See [`scripts/README.md`](scripts/README.md) |
+| `analysis_scripts/` | The scripts of the matching tests reported in the thesis (leave-one-out tests, spectral regions, grid start, peak settings, run time), and `analysis_scripts/earlier_work/` for the earlier plotting and exploratory scripts. See [`analysis_scripts/README.md`](analysis_scripts/README.md) |
 | `ui/` | Mock-up of the web interface described in the thesis (Chapter 5): three static pages and their screenshots. A design, not a working application. See [`ui/README.md`](ui/README.md) |
 | `thesis/` | Word files of the tables and appendices written for the thesis (Tables 2.X, 4.5 to 4.11, Appendices A to G) and the reference list draft. See [`thesis/README.md`](thesis/README.md) |
 | `Archived/` | The earlier schema, its data and the analysis scripts that used it |
@@ -150,4 +150,4 @@ The settings in steps 2 and 5 (range check, window, prominence, spacing, toleran
 
 ## Testing the matching methods
 
-The scripts in [`scripts/`](scripts/) re-run the tests reported in the thesis on the database in this repository: leave-one-specimen-out and leave-one-scan-out tests, a grid starting at 600 cm-1, a grid search of the peak-position settings, tests on the 15 layered mock-up scans, and the run time of the matcher. Each script only reads the database. `scripts/README.md` lists what each script does, how to run it and which table of the thesis it feeds. The scripts keep the settings of `match_unknown.py`, so a change to the matcher means the tests should be run again.
+The matching program is `match_unknown.py`. The scripts in [`analysis_scripts/`](analysis_scripts/) re-run the tests reported in the thesis on the database in this repository: leave-one-specimen-out and leave-one-scan-out tests, a grid starting at 600 cm-1, a grid search of the peak-position settings, tests on the 15 layered mock-up scans, and the run time of the matcher. Each script only reads the database. `analysis_scripts/README.md` lists what each script does, how to run it and which table of the thesis it feeds. The scripts keep the settings of `match_unknown.py`, so a change to the matcher means the tests should be run again.
