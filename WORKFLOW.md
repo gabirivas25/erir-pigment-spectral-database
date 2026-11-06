@@ -582,5 +582,5 @@ The scripts in `analysis_scripts/` repeat the tests reported in the thesis. Run 
 3. Copy the numbers into the thesis tables by hand. The scripts print results to the screen; `peak_settings_grid.py` also writes `peak_settings_grid.json` in the folder where you ran it, and the other scripts write their `.json` file the same way. Do not commit these output files unless you want to keep them.
 4. If the number of standards changed, check the counts that the thesis states (for example 221 and 67 scans) against the first lines the scripts print.
 
-`scripts/time_matcher.py` imports `match_unknown.py` from the repository, so run it from the repository folder.
+`analysis_scripts/time_matcher.py` imports `match_unknown.py` from the repository, so run it from the repository folder.
 
