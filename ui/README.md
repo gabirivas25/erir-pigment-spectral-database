@@ -16,4 +16,4 @@ In `match.html` the unknown spectrum and the selected standard are drawn one abo
 
 **Example data.** The unknown spectrum on the Match page is the calcite scan with a small change, and the scores are made up. The counts on the Materials page (15 materials, 242 ER-IR scans, 14 ATR standards) are from an earlier state of the database; the database now holds 20 materials, 288 ER-IR scans and 19 ATR standards.
 
-**Not in the mock-up:** a place to add results of other techniques (XRF, Raman), the display of the chosen method, region and peak settings next to each result, and the exported report. Chapter 5 says the interface should have them.
+**Shown in the Match page mock-up:** a choice of method and spectral region, editable peak settings (prominence, spacing, tolerance) with a note that they change the result, a "Settings used" box above the ranked standards, and an "Other evidence" card (XRF, Raman, Download report). These are drawings only; the buttons do not produce a real report.
