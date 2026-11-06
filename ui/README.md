@@ -1,14 +1,15 @@
 # Interface mock-up
 
-A design for the web interface described in Chapter 5 of the thesis. It is a mock-up: three static pages with example data, no server and no matching. The interface itself has not been built.
+A design for the web interface described in Chapter 5 of the thesis. It is a mock-up: four static pages with example data, no server and no matching. The interface itself has not been built.
 
-**To look at it:** open `materials.html` in a web browser. The pages link to each other: the menu has Materials and Match, and the scan page opens from a material. Fonts load from Google Fonts; without a connection the browser uses its default font.
+**To look at it:** open `materials.html` in a web browser. The pages link to each other: the menu has Materials, Scans and Match. A material name on the Materials page opens the Scans page, and a file name there opens the scan viewer. Fonts load from Google Fonts; without a connection the browser uses its default font.
 
 | Page | File | Figure in the thesis |
 |---|---|---|
 | Materials | `materials.html` | Fig. 5.1 |
+| Scans (search a material, list its scans) | `scans.html` | not numbered yet |
 | Match an unknown spectrum | `match.html` | Fig. 5.2 |
-| Scan (spectrum viewer) | `scan.html` | Fig. 5.3 |
+| Scan viewer (one spectrum) | `scan.html` | Fig. 5.3 |
 
 In `match.html` the unknown spectrum and the selected standard are drawn one above the other on the same wavenumber axis. In `scan.html` the ER-IR scan and its ATR standard are drawn the same way.
 
