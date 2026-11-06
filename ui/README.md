@@ -2,7 +2,7 @@
 
 A design for the web interface described in Chapter 5 of the thesis. It is a mock-up: three static pages with example data, no server and no matching. The interface itself has not been built.
 
-**To look at it:** open `materials.html` in a web browser. The three pages link to each other. Fonts load from Google Fonts; without a connection the browser uses its default font.
+**To look at it:** open `materials.html` in a web browser. The pages link to each other: the menu has Materials and Match, and the scan page opens from a material. Fonts load from Google Fonts; without a connection the browser uses its default font.
 
 | Page | File | Figure in the thesis |
 |---|---|---|
