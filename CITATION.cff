@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this database or these programs, please cite them as below."
+title: "ER-IR/ATR spectral database for mineral pigments and matching programs"
+type: software
+authors:
+  - family-names: "Rivas Carmona"
+    given-names: "Maria Gabriela"
+    affiliation: "University of Padova"
+repository-code: "https://github.com/gabirivas25/erir-pigment-spectral-database"
+license: MIT
+doi: 10.5281/zenodo.24082163
+version: thesis-v1.0
+date-released: 2026-11-09
+abstract: "SQLite database of external reflectance (ER-IR) and ATR infrared reference spectra of mineral pigment standards, with a program that matches an unknown spectrum against them. Developed for an MSc thesis at the University of Padova."
+keywords:
+  - infrared spectroscopy
+  - external reflectance
+  - mineral pigments
+  - spectral database
+  - cultural heritage

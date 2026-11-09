@@ -1,5 +1,7 @@
 # Pigment Spectral Standards Database
 
+[![DOI](https://zenodo.org/badge/1386358412.svg)](https://doi.org/10.5281/zenodo.24082163)
+
 Relational SQLite/MySQL database of paired ER-IR and ATR infrared spectra of mineral pigment standards, for cultural heritage research.
 
 Prepared by Maria Gabriela Rivas Carmona, University of Padova
@@ -171,3 +173,9 @@ python3 match_unknown.py my_spectrum.dpt --prominence 1.0 --spacing 20 --toleran
 ## Testing the matching methods
 
 The matching program is `match_unknown.py`. The scripts in [`analysis_scripts/`](analysis_scripts/) re-run the tests reported in the thesis on the database in this repository: leave-one-specimen-out and leave-one-scan-out tests, a grid starting at 600 cm-1, a grid search of the peak-position settings, tests on the 15 layered mock-up scans, and the run time of the matcher. Each script only reads the database. `analysis_scripts/README.md` lists what each script does, how to run it and which table of the thesis it feeds. The scripts keep the settings of `match_unknown.py`, so a change to the matcher means the tests should be run again.
+
+## How to cite
+
+Rivas Carmona, M. G. (2026). *ER-IR/ATR spectral database for mineral pigments and matching programs (thesis version 1.0)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24082164
+
+The DOI above is for the archived thesis version (release `thesis-v1.0`). The badge at the top gives the DOI that always points to the latest version. GitHub's "Cite this repository" button uses `CITATION.cff`.
